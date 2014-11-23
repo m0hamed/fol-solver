@@ -70,6 +70,18 @@ class Implication():
     self.anticedent = anticedent
     self.consequent = consequent
 
+  def get_not_or_form(self):
+    return Conjunction([anticedent.negate,consequent])
+
+class Equivalence():
+  def __init__(self, anticedent, consequent):
+    self.anticedent = anticedent
+    self.consequent = consequent
+
+  def get_implication_form(self):
+    return Conjunction([Implication(anticedent, consequent),
+      Implication(consequent, anticedent)])
+
 class Substitution:
   def __init__(self, variable, replacement):
     self.variable = variable
