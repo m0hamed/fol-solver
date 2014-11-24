@@ -22,13 +22,19 @@ class Function(Nested):
     return isinstance(f, Function) and f.name == self.name and f.children == self.children
 
 class Variable(Atom):
-  def __init__(self, name):
+  def __init__(self, name, negated = False):
     self.name = name
+    self.negated = negated
 
   def __eq__(self, v):
     return isinstance(v, Variable) and v.name == self.name
 
+  def negate(self):
+    self.negated = not self.negated
+
   def __str__(self):
+    if self.negated:
+      return " Not [ " + self.name + " ] "
     return self.name
 
 class Predicate(Nested):
@@ -104,10 +110,12 @@ class Implication(connectives):
     self.negated = negated
 
   def convert(self):
-    return Or([self.anticedent.negate, self.consequent])
+    temp = self.anticedent
+    temp.negate()
+    return Or([temp, self.consequent])
 
   def __str__(self):
-    s = str(self.anticedent) + " -> " + str(self.consequent)
+    s = " [ " + str(self.anticedent) + " -> " + str(self.consequent) + " ] "
     if self.negated:
       s = "Not [ " + s + " ]"
     return s
@@ -128,7 +136,7 @@ class Equivalence(connectives):
       Implication(self.statement2, self.statement1)])
 
   def __str__(self):
-    s = str(self.statement1) + " <-> " + str(self.statement2)
+    s = " [ " + str(self.statement1) + " <-> " + str(self.statement2) + " ] "
     if self.negated:
       s = "Not [ " + s + " ]"
     return s
@@ -184,10 +192,39 @@ class ThereExists(Quantifier):
       s = "Not [ " + s + " ]"
     return s
 
+def remove_equivalences(statement):
+  if isinstance(statement, Predicate) or isinstance(statement, Variable):
+    pass
+  elif isinstance(statement, And ) or isinstance(statement, Or):
+    for i in range(len(statement.children)):
+      statement.children[i] = remove_equivalences(statement.children[i])
+  elif isinstance(statement, Implication):
+    statement.anticedent = remove_equivalences(statement.anticedent)
+    statement.consequent = remove_equivalences(statement.consequent)
+  elif isinstance(statement, Equivalence):
+    statement = statement.convert()
+    return remove_equivalences(statement)
+  elif isinstance(statement, ForAll) or isinstance(statement, ThereExists):
+    remove_equivalences(statement.statement)
+  return statement
+
+def remove_implications(statement):
+  if isinstance(statement, Predicate) or isinstance(statement, Variable):
+    pass
+  elif isinstance(statement, And ) or isinstance(statement, Or):
+    for i in range(len(statement.children)):
+      statement.children[i] = remove_implications(statement.children[i])
+  elif isinstance(statement, Implication):
+    statement = statement.convert()
+    return remove_implications(statement)
+  elif isinstance(statement, ForAll) or isinstance(statement, ThereExists):
+    remove_implications(statement.statement)
+  return statement
+
 if __name__ == "__main__":
   e1 = And([Predicate("P", Function("f", Variable("x"))), Predicate("P",
         Function("g", Variable("x")))])
-  e2 = Or([Predicate("P", Function("f", Variable("x"))), Predicate("P",
+  e2 = Or([Predicate("P", Function("h", Variable("x"))), Predicate("i",
         Function("g", Variable("x")))])
   e3 = Implication(e1, e2)
   e4 = Equivalence(e1,e2)
@@ -230,3 +267,21 @@ if __name__ == "__main__":
   print("Expression 16: ", e16)
   print("Expression 17: ", e17)
   print("Expression 18: ", e18)
+
+  print("\n\nRemoving Equivalences")
+  test1 = Equivalence(Equivalence(Equivalence(Variable('x'), Variable('x')), Variable('x')), Variable('z'))
+  test2 = Or([Equivalence(Variable('x'), Variable('y')),Variable('z')])
+  print(test1)
+  print(remove_equivalences(test1))
+  print("\n")
+  print(test2)
+  print(remove_equivalences(test2))
+
+  print("\n\nRemoving Implications")
+  test3 = Implication(Implication(Variable('x'), Variable('y')), Variable('z'))
+  test4 = Implication(Implication(Implication(Variable('x'), Variable('x')), Variable('x')), Variable('z'))
+  print(test3)
+  print(remove_implications(test3))
+  print("\n")
+  print(test4)
+  print(remove_implications(test4))
