@@ -42,6 +42,9 @@ class Predicate(Nested):
     super().__init__(name, children)
     self.negated = negated
 
+  def push_negation(self):
+    pass
+
   def negate(self):
     self.negated = not self.negated
 
@@ -193,7 +196,7 @@ class ThereExists(Quantifier):
     return s
 
 def remove_equivalences(statement):
-  if isinstance(statement, Predicate) or isinstance(statement, Variable):
+  if isinstance(statement, Predicate):
     pass
   elif isinstance(statement, And ) or isinstance(statement, Or):
     for i in range(len(statement.children)):
@@ -204,12 +207,12 @@ def remove_equivalences(statement):
   elif isinstance(statement, Equivalence):
     statement = statement.convert()
     return remove_equivalences(statement)
-  elif isinstance(statement, ForAll) or isinstance(statement, ThereExists):
+  elif isinstance(statement, Quantifier):
     remove_equivalences(statement.statement)
   return statement
 
 def remove_implications(statement):
-  if isinstance(statement, Predicate) or isinstance(statement, Variable):
+  if isinstance(statement, Predicate):
     pass
   elif isinstance(statement, And ) or isinstance(statement, Or):
     for i in range(len(statement.children)):
@@ -217,8 +220,21 @@ def remove_implications(statement):
   elif isinstance(statement, Implication):
     statement = statement.convert()
     return remove_implications(statement)
-  elif isinstance(statement, ForAll) or isinstance(statement, ThereExists):
+  elif isinstance(statement, Quantifier):
     remove_implications(statement.statement)
+  return statement
+
+def push_nots_inwards(statement):
+  if isinstance(statement, Predicate):
+    pass
+  elif isinstance(statement, And ) or isinstance(statement, Or):
+    if statement.negated:
+      statement = statement.push_negation()
+      for i in range(len(statement.children)):
+        statement.children[i] = push_nots_inwards(statement.children[i])
+  elif isinstance(statement, Quantifier):
+    statement = statement.push_negation()
+    statement.statement = push_nots_inwards(statement.statement)
   return statement
 
 if __name__ == "__main__":
@@ -285,3 +301,16 @@ if __name__ == "__main__":
   print("\n")
   print(test4)
   print(remove_implications(test4))
+
+  print("\n\nPush Not")
+  test5 = And([And([Predicate("P", Function("f", Variable("x"))), Predicate("P",
+        Function("g", Variable("x")))]), Predicate("P",Function("g", Variable("x")))])
+  test6 = ForAll(Variable("x"), And([Predicate("P", Function("f", Variable("x"))),
+        Predicate("P", Function("g", Variable("x")))]))
+  test5.negate()
+  test6.negate()
+  print(test5)
+  print(push_nots_inwards(test5))
+  print("\n")
+  print(test6)
+  print(push_nots_inwards(test6))
