@@ -162,7 +162,7 @@ class ForAll(Quantifier):
     return ThereExists(self.variable,temp)
 
   def __str__(self):
-    s = "FOR_ALL(" + self.variable.__str__() + ") {" + self.statement.__str__() + "}"
+    s = "FOR_ALL(" + str(self.variable) + ") {" + str(self.statement) + "}"
     if self.negated:
       s = "Not [ " + s + " ]"
     return s
