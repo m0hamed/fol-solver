@@ -208,7 +208,7 @@ def remove_equivalences(statement):
     statement = statement.convert()
     return remove_equivalences(statement)
   elif isinstance(statement, Quantifier):
-    remove_equivalences(statement.statement)
+    statement.statement = remove_equivalences(statement.statement)
   return statement
 
 def remove_implications(statement):
@@ -221,7 +221,7 @@ def remove_implications(statement):
     statement = statement.convert()
     return remove_implications(statement)
   elif isinstance(statement, Quantifier):
-    remove_implications(statement.statement)
+    statement.statement = remove_implications(statement.statement)
   return statement
 
 def push_nots_inwards(statement):
