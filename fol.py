@@ -166,35 +166,35 @@ class Quantifier():
       return self
 
 class ForAll(Quantifier):
-  def __init__(self, variable, statement, negated = False):
-    self.variable = variable
+  def __init__(self, variable_name, statement, negated = False):
+    self.variable_name = variable_name
     self.statement = statement
     self.negated = negated
 
   def flip(self):
     temp = self.statement
     temp.negate()
-    return ThereExists(self.variable,temp)
+    return ThereExists(self.variable_name,temp)
 
   def __str__(self):
-    s = "FOR_ALL(" + str(self.variable) + ") {" + str(self.statement) + "}"
+    s = "FOR_ALL(" + str(self.variable_name) + ") {" + str(self.statement) + "}"
     if self.negated:
       s = "Not [ " + s + " ]"
     return s
 
 class ThereExists(Quantifier):
-  def __init__(self, variable, statement, negated = False):
-    self.variable = variable
+  def __init__(self, variable_name, statement, negated = False):
+    self.variable_name = variable_name
     self.statement = statement
     self.negated = negated
 
   def flip(self):
     temp = self.statement
     temp.negate()
-    return ForAll(self.variable,temp)
+    return ForAll(self.variable_name,temp)
 
   def __str__(self):
-    s = "THERE_EXISTS(" + str(self.variable) + ") {" + str(self.statement) + "}"
+    s = "THERE_EXISTS(" + str(self.variable_name) + ") {" + str(self.statement) + "}"
     if self.negated:
       s = "Not [ " + s + " ]"
     return s
@@ -254,10 +254,10 @@ def standardize_apart(statement, variable = None, change_variable = False, chang
     for i in range(len(statement.children)):
       statement.children[i] = standardize_apart(statement.children[i],variable,True, change)
   elif isinstance(statement, ForAll) or isinstance(statement, ThereExists):
-    var = statement.variable
+    var = statement.variable_name
     if var == variable or change_variable:
       change = str(random.randint(0,100))
-      statement.variable = var + change
+      statement.variable_name = var + change
       statement.statement = standardize_apart(statement.statement, var, True, change)
     else:
       statement.statement = standardize_apart(statement.statement, var, False)
