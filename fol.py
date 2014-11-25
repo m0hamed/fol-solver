@@ -1,5 +1,6 @@
 import pdb
 from copy import deepcopy
+import random
 
 class Atom():
   pass
@@ -14,6 +15,12 @@ class Nested(Atom):
       return self.name + "(" + ", ".join(map(str, self.children)) + ")"
     else:
       return self.name
+
+  def get_children(self):
+    return self.children
+
+  def set_children(self,children):
+    self.children = children
 
 class Function(Nested):
   def __init__(self, name, *children, negated=False):
@@ -237,80 +244,50 @@ def push_nots_inwards(statement):
     statement.statement = push_nots_inwards(statement.statement)
   return statement
 
+def standardize_apart(statement, variable = None, change_variable = False, change = ""):
+  if isinstance(statement, Variable):
+    if statement.name == variable and change_variable:
+      print('here1',change)
+      statement.name = statement.name + change
+  elif isinstance(statement, Predicate) or isinstance(statement, Function):
+    temp = [None] * len(statement.get_children())
+    for i in range(len(statement.get_children())):
+      temp[i] = standardize_apart(statement.get_children()[i],variable,change_variable, change)
+    statement.set_children(temp)
+  elif isinstance(statement, And ) or isinstance(statement, Or):
+    for i in range(len(statement.children)):
+      # changed here
+      statement.children[i] = standardize_apart(statement.children[i],variable,True, change)
+  elif isinstance(statement, ForAll) or isinstance(statement, ThereExists):
+    var = statement.variable
+    if var == variable or change_variable:
+      print('Change')
+      change = str(random.randint(0,100))
+      statement.variable = var + change
+      statement.statement = standardize_apart(statement.statement, var, True, change)
+    else:
+      statement.statement = standardize_apart(statement.statement, var, False)
+  return statement
+
+def cnf(statement):
+  print("remove equivalences")
+  statement = remove_equivalences(statement)
+  print(statement)
+  print("\nremove implications")
+  statement = remove_implications(statement)
+  print(statement)
+  print("\npush not inwards")
+  statement = push_nots_inwards(statement)
+  print(statement)
+  print("\nstandardize apart")
+  statement = standardize_apart(statement)
+  print(statement)
+
 if __name__ == "__main__":
-  e1 = And([Predicate("P", Function("f", Variable("x"))), Predicate("P",
-        Function("g", Variable("x")))])
-  e2 = Or([Predicate("P", Function("h", Variable("x"))), Predicate("i",
-        Function("g", Variable("x")))])
-  e3 = Implication(e1, e2)
-  e4 = Equivalence(e1,e2)
-  e5 = ThereExists(Variable("x"), And([Predicate("P", Function("f", Variable("x"))),
-        Predicate("P", Function("g", Variable("x")))]))
-  e6 = ForAll(Variable("x"), And([Predicate("P", Function("f", Variable("x"))),
-        Predicate("P", Function("g", Variable("x")))]))
-  print("Orignal Expression:")
-  print("Expression 1: ", e1)
-  print("Expression 2: ", e2)
-  print("Expression 3: ", e3)
-  print("Expression 4: ", e4)
-  print("Expression 5: ", e5)
-  print("Expression 6: ", e6)
-
-  print("\n\nNegated Expressions")
-  e1.negate()
-  e2.negate()
-  e3.negate()
-  e4.negate()
-  e5.negate()
-  e6.negate()
-  print("Expression 7: ", e1)
-  print("Expression 8: ", e2)
-  print("Expression 9: ", e3)
-  print("Expression 10: ", e4)
-  print("Expression 11: ", e5)
-  print("Expression 12: ", e6)
-
-  print("\n\nPushed Negation Expressions")
-  e13 = e1.push_negation()
-  e14 = e2.push_negation()
-  e15 = e3.push_negation()
-  e16 = e4.push_negation()
-  e17 = e5.push_negation()
-  e18 = e6.push_negation()
-  print("Expression 13: ", e13)
-  print("Expression 14: ", e14)
-  print("Expression 15: ", e15)
-  print("Expression 16: ", e16)
-  print("Expression 17: ", e17)
-  print("Expression 18: ", e18)
-
-  print("\n\nRemoving Equivalences")
-  test1 = Equivalence(Equivalence(Equivalence(Variable('x'), Variable('x')), Variable('x')), Variable('z'))
-  test2 = Or([Equivalence(Variable('x'), Variable('y')),Variable('z')])
-  print(test1)
-  print(remove_equivalences(test1))
-  print("\n")
-  print(test2)
-  print(remove_equivalences(test2))
-
-  print("\n\nRemoving Implications")
-  test3 = Implication(Implication(Variable('x'), Variable('y')), Variable('z'))
-  test4 = Implication(Implication(Implication(Variable('x'), Variable('x')), Variable('x')), Variable('z'))
-  print(test3)
-  print(remove_implications(test3))
-  print("\n")
-  print(test4)
-  print(remove_implications(test4))
-
-  print("\n\nPush Not")
-  test5 = And([And([Predicate("P", Function("f", Variable("x"))), Predicate("P",
-        Function("g", Variable("x")))]), Predicate("P",Function("g", Variable("x")))])
-  test6 = ForAll(Variable("x"), And([Predicate("P", Function("f", Variable("x"))),
-        Predicate("P", Function("g", Variable("x")))]))
-  test5.negate()
-  test6.negate()
-  print(test5)
-  print(push_nots_inwards(test5))
-  print("\n")
-  print(test6)
-  print(push_nots_inwards(test6))
+  random.seed()
+  temp = Predicate("P",Variable("x"))
+  temp.negate()
+  expression1 = ThereExists('x', ForAll('x', ThereExists('x', ForAll('x', Predicate("P",Variable("x")) ) ) ) )
+  expression2 = And([ThereExists('x', ForAll('x', ThereExists('x', ForAll('x', Predicate("P",Variable("x")) ) ) ) ),expression1])
+  cnf(expression1)
+  cnf(expression2)
