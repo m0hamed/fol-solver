@@ -152,11 +152,8 @@ class Equivalence(Connective):
     return s
 
   def flip(self):
-    temp1 = Implication(self.statement1, self.statement2)
-    temp1.negate()
-    temp2 = Implication(self.statement2, self.statement1)
-    temp2.negate()
-    return Or([temp1, temp2])
+    return Or([Implication(self.statement1, self.statement2, True),
+            Implication(self.statement2, self.statement1, True)])
 
 class Quantifier():
   def negate(self):
