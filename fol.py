@@ -119,7 +119,7 @@ class Implication(Connective):
     self.consequent = consequent
     self.negated = negated
 
-  def convert(self):
+  def get_or(self):
     temp = self.anticedent
     temp.negate()
     return Or([temp, self.consequent])
@@ -141,7 +141,7 @@ class Equivalence(Connective):
     self.statement2 = statement2
     self.negated = negated
 
-  def convert(self):
+  def get_implications(self):
     return And([Implication(self.statement1, self.statement2),
       Implication(self.statement2, self.statement1)])
 
@@ -209,7 +209,7 @@ def remove_equivalences(statement):
     statement.anticedent = remove_equivalences(statement.anticedent)
     statement.consequent = remove_equivalences(statement.consequent)
   elif isinstance(statement, Equivalence):
-    statement = statement.convert()
+    statement = statement.get_implications()
     return remove_equivalences(statement)
   elif isinstance(statement, Quantifier):
     statement.statement = remove_equivalences(statement.statement)
@@ -222,7 +222,7 @@ def remove_implications(statement):
     for i in range(len(statement.children)):
       statement.children[i] = remove_implications(statement.children[i])
   elif isinstance(statement, Implication):
-    statement = statement.convert()
+    statement = statement.get_or()
     return remove_implications(statement)
   elif isinstance(statement, Quantifier):
     statement.statement = remove_implications(statement.statement)
