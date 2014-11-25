@@ -247,7 +247,6 @@ def push_nots_inwards(statement):
 def standardize_apart(statement, variable = None, change_variable = False, change = ""):
   if isinstance(statement, Variable):
     if statement.name == variable and change_variable:
-      print('here1',change)
       statement.name = statement.name + change
   elif isinstance(statement, Predicate) or isinstance(statement, Function):
     temp = [None] * len(statement.get_children())
@@ -256,12 +255,10 @@ def standardize_apart(statement, variable = None, change_variable = False, chang
     statement.set_children(temp)
   elif isinstance(statement, And ) or isinstance(statement, Or):
     for i in range(len(statement.children)):
-      # changed here
       statement.children[i] = standardize_apart(statement.children[i],variable,True, change)
   elif isinstance(statement, ForAll) or isinstance(statement, ThereExists):
     var = statement.variable
     if var == variable or change_variable:
-      print('Change')
       change = str(random.randint(0,100))
       statement.variable = var + change
       statement.statement = standardize_apart(statement.statement, var, True, change)
