@@ -245,7 +245,7 @@ def standardize_apart(statement, variable = None, change_variable = False, chang
   if isinstance(statement, Variable):
     if statement.name == variable and change_variable:
       statement.name = statement.name + change
-  elif isinstance(statement, Predicate) or isinstance(statement, Function):
+  elif isinstance(statement, Nested):
     temp = [None] * len(statement.get_children())
     for i in range(len(statement.get_children())):
       temp[i] = standardize_apart(statement.get_children()[i],variable,change_variable, change)
