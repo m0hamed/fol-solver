@@ -61,7 +61,7 @@ class Predicate(Nested):
     else:
       return super(Predicate,self).__str__()
 
-class connectives():
+class Connective():
   def negate(self):
     self.negated = not self.negated
 
@@ -71,7 +71,7 @@ class connectives():
     else:
       return self
 
-class And(connectives):
+class And(Connective):
   def __init__(self, predicates=[], negated=False):
     self.children = predicates
     self.negated = negated
@@ -92,7 +92,7 @@ class And(connectives):
       s = "Not [ " + s + " ]"
     return s
 
-class Or(connectives):
+class Or(Connective):
   def __init__(self, predicates=[], negated=False):
     self.children = predicates
     self.negated = negated
@@ -113,7 +113,7 @@ class Or(connectives):
       s = "Not [ " + s + " ]"
     return s
 
-class Implication(connectives):
+class Implication(Connective):
   def __init__(self, anticedent, consequent, negated = False):
     self.anticedent = anticedent
     self.consequent = consequent
@@ -135,7 +135,7 @@ class Implication(connectives):
     temp.negate()
     return And([self.anticedent,temp])
 
-class Equivalence(connectives):
+class Equivalence(Connective):
   def __init__(self, statement1, statement2, negated = False):
     self.statement1 = statement1
     self.statement2 = statement2
