@@ -253,7 +253,7 @@ def standardize_apart(statement, variable = None, change_variable = False, chang
   elif isinstance(statement, And ) or isinstance(statement, Or):
     for i in range(len(statement.children)):
       statement.children[i] = standardize_apart(statement.children[i],variable,True, change)
-  elif isinstance(statement, ForAll) or isinstance(statement, ThereExists):
+  elif isinstance(statement, Quantifier):
     var = statement.variable_name
     if var == variable or change_variable:
       change = str(random.randint(0,100))
