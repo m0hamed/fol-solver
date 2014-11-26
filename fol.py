@@ -22,9 +22,16 @@ class Nested(Atom):
   def set_children(self,children):
     self.children = children
 
+  def push_negation(self):
+    pass
+
+  def negate(self):
+    self.negated = not self.negated
+
 class Function(Nested):
   def __init__(self, name, *children, negated=False):
     super().__init__(name, children)
+    self.negated = negated
   def __eq__(self, f):
     return isinstance(f, Function) and f.name == self.name and f.children == self.children
 
@@ -48,12 +55,6 @@ class Predicate(Nested):
   def __init__(self, name, *children, negated=False):
     super().__init__(name, children)
     self.negated = negated
-
-  def push_negation(self):
-    pass
-
-  def negate(self):
-    self.negated = not self.negated
 
   def __str__(self):
     if self.negated:
@@ -122,7 +123,7 @@ class Implication(Connective):
   def get_or(self):
     temp = self.anticedent
     temp.negate()
-    return Or([temp, self.consequent])
+    return Or([temp, deepcopy(self.consequent)], self.negated)
 
   def __str__(self):
     s = " [ " + str(self.anticedent) + " -> " + str(self.consequent) + " ] "
@@ -131,9 +132,9 @@ class Implication(Connective):
     return s
 
   def flip(self):
-    temp = self.consequent
+    temp = deepcopy(self.consequent)
     temp.negate()
-    return And([self.anticedent,temp])
+    return And([deepcopy(self.anticedent),temp])
 
 class Equivalence(Connective):
   def __init__(self, statement1, statement2, negated = False):
@@ -143,7 +144,7 @@ class Equivalence(Connective):
 
   def get_implications(self):
     return And([Implication(self.statement1, self.statement2),
-      Implication(self.statement2, self.statement1)])
+      Implication(self.statement2, self.statement1)],self.negated)
 
   def __str__(self):
     s = " [ " + str(self.statement1) + " <-> " + str(self.statement2) + " ] "
@@ -152,8 +153,8 @@ class Equivalence(Connective):
     return s
 
   def flip(self):
-    return Or([Implication(self.statement1, self.statement2, True),
-            Implication(self.statement2, self.statement1, True)])
+    return Or([Implication(deepcopy(self.statement1), deepcopy(self.statement2, True)),
+            Implication(deepcopy(self.statement2), deepcopy(self.statement1, True))])
 
 class Quantifier():
   def negate(self):
@@ -172,7 +173,7 @@ class ForAll(Quantifier):
     self.negated = negated
 
   def flip(self):
-    temp = self.statement
+    temp = deepcopy(self.statement)
     temp.negate()
     return ThereExists(self.variable_name,temp)
 
@@ -189,7 +190,7 @@ class ThereExists(Quantifier):
     self.negated = negated
 
   def flip(self):
-    temp = self.statement
+    temp = deepcopy(self.statement)
     temp.negate()
     return ForAll(self.variable_name,temp)
 
@@ -223,7 +224,7 @@ def remove_implications(statement):
       statement.children[i] = remove_implications(statement.children[i])
   elif isinstance(statement, Implication):
     statement = statement.get_or()
-    return remove_implications(statement)
+    remove_implications(statement)
   elif isinstance(statement, Quantifier):
     statement.statement = remove_implications(statement.statement)
   return statement
@@ -234,30 +235,90 @@ def push_nots_inwards(statement):
   elif isinstance(statement, And ) or isinstance(statement, Or):
     if statement.negated:
       statement = statement.push_negation()
-      for i in range(len(statement.children)):
-        statement.children[i] = push_nots_inwards(statement.children[i])
+    for i in range(len(statement.children)):
+      statement.children[i] = push_nots_inwards(statement.children[i])
   elif isinstance(statement, Quantifier):
     statement = statement.push_negation()
     statement.statement = push_nots_inwards(statement.statement)
   return statement
 
+def standardize_apart(statement, variable_name = None, change_variable = False, change = ""):
+  if isinstance(statement, Variable):
+    if statement.name == variable_name and change_variable:
+      statement.name = statement.name + change
+  elif isinstance(statement, Nested):
+    temp = [None] * len(statement.get_children())
+    for i in range(len(statement.get_children())):
+      temp[i] = standardize_apart(statement.get_children()[i], variable_name, change_variable, change)
+    statement.set_children(temp)
+  elif isinstance(statement, And) or isinstance(statement, Or):
+    for i in range(len(statement.children)):
+      statement.children[i] = standardize_apart(statement.children[i],variable_name,True, change)
+    for i in range(len(statement.children)):
+      for j in range(i+1,len(statement.children)):
+        for k in (x for x in get_variables(statement.children[i]) if x in get_variables(statement.children[j])):
+          change = str(random.randint(0,100))
+          statement.children[j] = standardize_apart(statement.children[j],k,True, change)
+  elif isinstance(statement, Quantifier):
+    var = statement.variable_name
+    if var == variable_name:
+      change = str(random.randint(0,100))
+      statement.variable_name = var + change
+      statement.statement = standardize_apart(statement.statement, var, True, change)
+    else:
+      statement.statement = standardize_apart(statement.statement, variable_name, change_variable, change)
+      statement.statement = standardize_apart(statement.statement, var, False)
+  return statement
+
+def get_variables(statement):
+  if isinstance(statement, Variable):
+    yield statement
+  elif isinstance(statement, Nested):
+    for i in range(len(statement.get_children())):
+      for x in get_variables(statement.get_children()[i]):
+        yield x
+  elif isinstance(statement, And) or isinstance(statement, Or):
+    for i in range(len(statement.children)):
+      for x in get_variables(statement.children):
+        yield x
+  elif isinstance(statement, Quantifier):
+    yield statement.variable_name
+    for x in get_variables(statement.statement):
+      yield x
+
+def generate():
+  for x in xrange(1,100):
+    yield x
+
 def cnf(statement):
-  print("remove equivalences")
+  print(statement)
+  print("\nremove equivalences")
   statement = remove_equivalences(statement)
   print(statement)
   print("\nremove implications")
   statement = remove_implications(statement)
   print(statement)
-  print("\npush not inwards")
-  statement = push_nots_inwards(statement)
-  print(statement)
+  # print("\npush not inwards")
+  # statement = push_nots_inwards(statement)
+  # print(statement)
+  # print('\nStandardize Apart')
+  # statement = standardize_apart(statement)
+  # print(statement)
 
 if __name__ == "__main__":
   random.seed()
-  temp = Predicate("P",Variable("x"))
-  temp.negate()
-  expression1 = ThereExists('x', ForAll('x', ThereExists('x',
-    ForAll('x', Predicate("P",Variable("x")) ) ) ) )
-  expression2 = And([ThereExists('x', ForAll('y', ThereExists('x',
-    ForAll('y', Predicate("P",Variable("x")) ) ) ) ),expression1])
-  cnf(expression2)
+  p1 = Predicate('P', Variable('x'))
+  p2 = Predicate('Q', Variable('x'))
+  p3 = Predicate('Q', Variable('y'))
+  f1 = Function('R', Variable('Y'), Variable('X'))
+  expression = ForAll('x', Equivalence(p1, And([p2, ThereExists('y',And([p3,f1 ]) )]) ) )
+  cnf(expression)
+
+  # expression1 = Implication(Predicate('P', Variable('x')), Predicate('P', Variable('y')))
+  # expression2 = Implication(Predicate('P', Variable('x')), Predicate('P', Variable('y')))
+  # expression = Implication(expression1, expression2)
+  # # expression = remove_equivalences(expression)
+  # print(expression)
+  # print('\n\n')
+  # expression = remove_implications(expression)
+  # print(expression)
