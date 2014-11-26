@@ -1,6 +1,5 @@
 import pdb
 from copy import deepcopy
-import random
 
 class Atom():
   pass
@@ -264,12 +263,12 @@ def standardize_apart(statement, variable_name = None, change_variable = False, 
     for i in range(len(statement.children)):
       for j in range(i+1,len(statement.children)):
         for k in (x for x in get_variables(statement.children[i]) if x in get_variables(statement.children[j])):
-          change = str(random.randint(0,100))
+          change = str(next(gen))
           statement.children[j] = standardize_apart(statement.children[j],k,True, change)
   elif isinstance(statement, Quantifier):
     var = statement.variable_name
     if var == variable_name:
-      change = str(random.randint(0,100))
+      change = str(next(gen))
       statement.variable_name = var + change
       statement.statement = standardize_apart(statement.statement, var, True, change)
     else:
@@ -293,9 +292,11 @@ def get_variables(statement):
     for x in get_variables(statement.statement):
       yield x
 
-def generate():
-  for x in xrange(1,100):
+def sequence_generator():
+  x = 0
+  while True:
     yield x
+    x += 1
 
 def cnf(statement):
   print(statement)
@@ -313,11 +314,12 @@ def cnf(statement):
   print(statement)
 
 if __name__ == "__main__":
-  random.seed()
+  global gen
+  gen = sequence_generator()
   p1 = Predicate('P', Variable('x'))
   p2 = Predicate('Q', Variable('x'))
   p3 = Predicate('Q', Variable('y'))
-  f1 = Function('R', Variable('y'), Variable('y'))
+  f1 = Predicate('R', Variable('y'), Variable('y'))
   expression = ForAll('x', Equivalence(p1, And([p2, ThereExists('y',And([p3,f1 ]) )]) ) )
   cnf(expression)
 
