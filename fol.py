@@ -35,26 +35,14 @@ class Function(Nested):
   def __eq__(self, f):
     return isinstance(f, Function) and f.name == self.name and f.children == self.children
 
-  def __str__(self):
-    if self.negated:
-      return "NOT[ " + super(Function,self).__str__() + " ]"
-    else:
-      return super(Function,self).__str__()
-
 class Variable(Atom):
-  def __init__(self, name, negated = False):
+  def __init__(self, name):
     self.name = name
-    self.negated = negated
 
   def __eq__(self, v):
     return isinstance(v, Variable) and v.name == self.name
 
-  def negate(self):
-    self.negated = not self.negated
-
   def __str__(self):
-    if self.negated:
-      return " Not [ " + self.name + " ] "
     return self.name
 
 class Predicate(Nested):
@@ -64,9 +52,9 @@ class Predicate(Nested):
 
   def __str__(self):
     if self.negated:
-      return "NOT[ " + super(Predicate,self).__str__() + " ]"
+      return chr(172) + super().__str__()
     else:
-      return super(Predicate,self).__str__()
+      return super().__str__()
 
 class Connective():
   def negate(self):
@@ -90,13 +78,11 @@ class And(Connective):
       return Or(temp)
 
   def __str__(self):
-    s = " { "
-    for x in self.children:
-      s += str(x)
-      s += " } . { "
-    s = s[:-4]
+    # code point 8896 is the unicode for the and symbol
+    separator = " " + chr(8896) + " "
+    s = "{" + separator.join([str(x) for x in self.children]) + "}"
     if self.negated:
-      s = "Not [ " + s + " ]"
+      s = chr(172) + s
     return s
 
 class Or(Connective):
@@ -111,13 +97,11 @@ class Or(Connective):
     return And(temp)
 
   def __str__(self):
-    s = " { "
-    for x in self.children:
-      s += str(x)
-      s += " } | { "
-    s = s[:-4]
+    # code point 8897 is the unicode for the or symbol
+    separator = " " + chr(8897) + " "
+    s = "{" + separator.join([str(x) for x in self.children]) + "}"
     if self.negated:
-      s = "Not [ " + s + " ]"
+      s = chr(172) + s
     return s
 
 class Implication(Connective):
@@ -132,9 +116,9 @@ class Implication(Connective):
     return Or([temp, deepcopy(self.consequent)], self.negated)
 
   def __str__(self):
-    s = " [ " + str(self.anticedent) + " -> " + str(self.consequent) + " ] "
+    s = "[" + str(self.anticedent) + " ==> " + str(self.consequent) + "]"
     if self.negated:
-      s = "Not [ " + s + " ]"
+      s = chr(172) + s
     return s
 
   def flip(self):
@@ -153,9 +137,9 @@ class Equivalence(Connective):
       Implication(self.statement2, self.statement1)],self.negated)
 
   def __str__(self):
-    s = " [ " + str(self.statement1) + " <-> " + str(self.statement2) + " ] "
+    s = "[" + str(self.statement1) + " <=> " + str(self.statement2) + "]"
     if self.negated:
-      s = "Not [ " + s + " ]"
+      s = chr(172) + s
     return s
 
   def flip(self):
@@ -184,9 +168,9 @@ class ForAll(Quantifier):
     return ThereExists(self.variable_name,temp)
 
   def __str__(self):
-    s = "FOR_ALL(" + str(self.variable_name) + ") {" + str(self.statement) + "}"
+    s = chr(8704) + self.variable_name + str(self.statement)
     if self.negated:
-      s = "Not [ " + s + " ]"
+      s = chr(172) + s
     return s
 
 class ThereExists(Quantifier):
@@ -201,9 +185,9 @@ class ThereExists(Quantifier):
     return ForAll(self.variable_name,temp)
 
   def __str__(self):
-    s = "THERE_EXISTS(" + str(self.variable_name) + ") {" + str(self.statement) + "}"
+    s = chr(8707) + self.variable_name + str(self.statement)
     if self.negated:
-      s = "Not [ " + s + " ]"
+      s = chr(172) + s
     return s
 
 def remove_equivalences(statement):
