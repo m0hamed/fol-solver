@@ -241,28 +241,6 @@ def push_nots_inwards(statement):
     statement.statement = push_nots_inwards(statement.statement)
   return statement
 
-def standardize_apart(statement, variable_name = None, change_variable = False, change = ""):
-  if isinstance(statement, Variable):
-    if statement.name == variable_name and change_variable:
-      statement.name = statement.name + change
-  elif isinstance(statement, Nested):
-    temp = [None] * len(statement.get_children())
-    for i in range(len(statement.get_children())):
-      temp[i] = standardize_apart(statement.get_children()[i],variable_name,change_variable, change)
-    statement.set_children(temp)
-  elif isinstance(statement, And ) or isinstance(statement, Or):
-    for i in range(len(statement.children)):
-      statement.children[i] = standardize_apart(statement.children[i],variable_name,True, change)
-  elif isinstance(statement, Quantifier):
-    var = statement.variable_name
-    if var == variable_name or change_variable:
-      change = str(random.randint(0,100))
-      statement.variable_name = var + change
-      statement.statement = standardize_apart(statement.statement, var, True, change)
-    else:
-      statement.statement = standardize_apart(statement.statement, var, False)
-  return statement
-
 def cnf(statement):
   print("remove equivalences")
   statement = remove_equivalences(statement)
@@ -273,15 +251,13 @@ def cnf(statement):
   print("\npush not inwards")
   statement = push_nots_inwards(statement)
   print(statement)
-  print("\nstandardize apart")
-  statement = standardize_apart(statement)
-  print(statement)
 
 if __name__ == "__main__":
   random.seed()
   temp = Predicate("P",Variable("x"))
   temp.negate()
-  expression1 = ThereExists('x', ForAll('x', ThereExists('x', ForAll('x', Predicate("P",Variable("x")) ) ) ) )
-  expression2 = And([ThereExists('x', ForAll('x', ThereExists('x', ForAll('x', Predicate("P",Variable("x")) ) ) ) ),expression1])
-  cnf(expression1)
+  expression1 = ThereExists('x', ForAll('x', ThereExists('x',
+    ForAll('x', Predicate("P",Variable("x")) ) ) ) )
+  expression2 = And([ThereExists('x', ForAll('y', ThereExists('x',
+    ForAll('y', Predicate("P",Variable("x")) ) ) ) ),expression1])
   cnf(expression2)
