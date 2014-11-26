@@ -143,8 +143,8 @@ class Equivalence(Connective):
     return s
 
   def flip(self):
-    return Or([Implication(deepcopy(self.statement1), deepcopy(self.statement2, True)),
-            Implication(deepcopy(self.statement2), deepcopy(self.statement1, True))])
+    return Or([Implication(deepcopy(self.statement1), deepcopy(self.statement2, negated=True)),
+            Implication(deepcopy(self.statement2), deepcopy(self.statement1, negated=True))])
 
 class Quantifier():
   def negate(self):
@@ -194,14 +194,17 @@ def remove_equivalences(statement):
   if isinstance(statement, Predicate):
     pass
   elif isinstance(statement, And ) or isinstance(statement, Or):
-    for i in range(len(statement.children)):
-      statement.children[i] = remove_equivalences(statement.children[i])
+    statement.children = [remove_equivalences(c) for c in statement.children]
+
   elif isinstance(statement, Implication):
     statement.anticedent = remove_equivalences(statement.anticedent)
     statement.consequent = remove_equivalences(statement.consequent)
+
   elif isinstance(statement, Equivalence):
     statement = statement.get_implications()
+
     return remove_equivalences(statement)
+
   elif isinstance(statement, Quantifier):
     statement.statement = remove_equivalences(statement.statement)
   return statement
@@ -210,13 +213,14 @@ def remove_implications(statement):
   if isinstance(statement, Predicate):
     pass
   elif isinstance(statement, And ) or isinstance(statement, Or):
-    for i in range(len(statement.children)):
-      statement.children[i] = remove_implications(statement.children[i])
+    statement.children = [remove_implications(c) for c in statement.children]
+
   elif isinstance(statement, Implication):
-    statement = statement.get_or()
-    remove_implications(statement)
+    statement = remove_implications(statement.get_or())
+
   elif isinstance(statement, Quantifier):
     statement.statement = remove_implications(statement.statement)
+
   return statement
 
 def push_nots_inwards(statement):
@@ -225,8 +229,7 @@ def push_nots_inwards(statement):
   elif isinstance(statement, And ) or isinstance(statement, Or):
     if statement.negated:
       statement = statement.push_negation()
-    for i in range(len(statement.children)):
-      statement.children[i] = push_nots_inwards(statement.children[i])
+    statement.children = [push_nots_inwards(c) for c in statement.children]
   elif isinstance(statement, Quantifier):
     statement = statement.push_negation()
     statement.statement = push_nots_inwards(statement.statement)
