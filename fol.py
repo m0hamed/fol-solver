@@ -286,7 +286,7 @@ def get_variables(statement):
         yield x
   elif isinstance(statement, And) or isinstance(statement, Or):
     for i in range(len(statement.children)):
-      for x in get_variables(statement.children):
+      for x in get_variables(statement.children[i]):
         yield x
   elif isinstance(statement, Quantifier):
     yield statement.variable_name
@@ -308,24 +308,24 @@ def cnf(statement):
   print("\npush not inwards")
   statement = push_nots_inwards(statement)
   print(statement)
-  # print('\nStandardize Apart')
-  # statement = standardize_apart(statement)
-  # print(statement)
+  print('\nStandardize Apart')
+  statement = standardize_apart(statement)
+  print(statement)
 
 if __name__ == "__main__":
   random.seed()
   p1 = Predicate('P', Variable('x'))
   p2 = Predicate('Q', Variable('x'))
   p3 = Predicate('Q', Variable('y'))
-  f1 = Function('R', Variable('Y'), Variable('X'))
+  f1 = Function('R', Variable('y'), Variable('y'))
   expression = ForAll('x', Equivalence(p1, And([p2, ThereExists('y',And([p3,f1 ]) )]) ) )
   cnf(expression)
 
-  # expression1 = Implication(Predicate('P', Variable('x')), Predicate('P', Variable('y')))
-  # expression2 = Implication(Predicate('P', Variable('x')), Predicate('P', Variable('y')))
-  # expression = Implication(expression1, expression2)
-  # # expression = remove_equivalences(expression)
+  # test expressions for standardize apart
+  # expression = ForAll('x', ThereExists('y', ThereExists('y', Predicate('p',Variable('x')))))
+  # expression = And([ForAll('x',Predicate('P', Variable('x'))), ThereExists('x',Predicate('P', Variable('x'))),ThereExists('x',Predicate('P', Variable('x')))])
+  # expression = ForAll('x', And([ ThereExists('y', Predicate('p',Variable('y'))), ThereExists('y', Predicate('p',Variable('y')))]))
   # print(expression)
   # print('\n\n')
   # expression = remove_implications(expression)
-  # print(expression)
+  # print(standardize_apart(expression))
