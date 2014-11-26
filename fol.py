@@ -32,8 +32,15 @@ class Function(Nested):
   def __init__(self, name, *children, negated=False):
     super().__init__(name, children)
     self.negated = negated
+
   def __eq__(self, f):
     return isinstance(f, Function) and f.name == self.name and f.children == self.children
+
+  def __str__(self):
+    if self.negated:
+      return "NOT[ " + super(Function,self).__str__() + " ]"
+    else:
+      return super(Function,self).__str__()
 
 class Variable(Atom):
   def __init__(self, name, negated = False):
@@ -298,9 +305,9 @@ def cnf(statement):
   print("\nremove implications")
   statement = remove_implications(statement)
   print(statement)
-  # print("\npush not inwards")
-  # statement = push_nots_inwards(statement)
-  # print(statement)
+  print("\npush not inwards")
+  statement = push_nots_inwards(statement)
+  print(statement)
   # print('\nStandardize Apart')
   # statement = standardize_apart(statement)
   # print(statement)
