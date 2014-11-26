@@ -121,7 +121,7 @@ class Implication(Connective):
     self.negated = negated
 
   def get_or(self):
-    temp = self.anticedent
+    temp = deepcopy(self.anticedent)
     temp.negate()
     return Or([temp, deepcopy(self.consequent)], self.negated)
 
