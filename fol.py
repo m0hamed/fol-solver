@@ -309,8 +309,11 @@ def skolemize(statement, to_skolemize={}, quantified_variables=[], used_names=No
     statement.set_children([skolemize(s, to_skolemize, quantified_variables, used_names) for s in statement.get_children()])
   return statement
 
+def discard_forall(statement):
+  if isinstance(statement, ForAll):
     statement = statement.statement
-    statement = discard_forall(statement)
+  if hasattr(statement, "get_children"):
+    statement.set_children([discard_forall(s) for s in statement.get_children()])
   return statement
 
 def cnf(statement):
@@ -329,6 +332,9 @@ def cnf(statement):
   print(statement)
   print('\nSkolemize')
   statement = skolemize(statement)
+  print(statement)
+  print('\nRemoving For All quatifiers')
+  statement = discard_forall(statement)
   print(statement)
 
 if __name__ == "__main__":
