@@ -255,6 +255,13 @@ def get_new_variable(used_names):
       if char not in used_names:
         return char
 
+def get_new_constant(used_names):
+  for i in range(1, 5):
+    for char in range(ord("a"), ord("k")):
+      char = chr(char)*i
+      if char not in used_names:
+        return char
+
 def standardize_apart(statement, scope={}, used_names=[]):
   if isinstance(statement, Variable):
     if statement.name in scope:
@@ -271,19 +278,37 @@ def standardize_apart(statement, scope={}, used_names=[]):
       statement.variable_name = sub
       used_names.append(sub)
     statement.statement = standardize_apart(statement.statement, scope, used_names)
-  if hasattr(statement, "get_children"):
+  elif hasattr(statement, "get_children"):
     statement.set_children([standardize_apart(s, scope, used_names) for s in statement.get_children()])
   return statement
 
-def discard_forall(statement):
-  if isinstance(statement, Predicate):
-    pass
-  elif isinstance(statement, And ) or isinstance(statement, Or):
-    for i in range(len(statement.children)):
-      statement.children[i] = discard_forall(statement.children[i])
-  elif isinstance(statement, ForAll):
-      statement.statement = discard_forall(statement.statement)
+def get_functions(statement):
+  if isinstance(statement, Function):
+    return [statement.name]
+  if hasattr(statement, "get_children"):
+    return [f for s in statement.get_children() for f in get_functions(s)]
+  else:
+    return []
+
+def skolemize(statement, to_skolemize={}, quantified_variables=[], used_names=None):
+  if used_names is None:
+    used_names = get_functions(statement)
+
+  if isinstance(statement, Variable):
+    if statement.name in to_skolemize:
+      statement = Function(to_skolemize[statement.name], *[Variable(v) for v in quantified_variables])
   elif isinstance(statement, ThereExists):
+    new_constant = get_new_constant(used_names)
+    to_skolemize[statement.variable_name] = new_constant
+    used_names.append(new_constant)
+    statement = skolemize(statement.statement, to_skolemize, quantified_variables, used_names)
+  elif isinstance(statement, ForAll):
+    quantified_variables.append(statement.variable_name)
+    statement.statement = skolemize(statement.statement, to_skolemize, quantified_variables, used_names)
+  elif hasattr(statement, "get_children"):
+    statement.set_children([skolemize(s, to_skolemize, quantified_variables, used_names) for s in statement.get_children()])
+  return statement
+
     statement = statement.statement
     statement = discard_forall(statement)
   return statement
@@ -301,6 +326,9 @@ def cnf(statement):
   print(statement)
   print('\nStandardize Apart')
   statement = standardize_apart(statement)
+  print(statement)
+  print('\nSkolemize')
+  statement = skolemize(statement)
   print(statement)
 
 if __name__ == "__main__":
