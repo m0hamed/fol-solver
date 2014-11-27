@@ -102,6 +102,39 @@ def discard_forall(statement):
     statement.set_children([discard_forall(s) for s in statement.get_children()])
   return statement
 
+def vertical_merge(statement):
+  if isinstance(statement, Connective):
+    new_children = []
+    for child in statement.get_children():
+      vertical_merge(child)
+      if isinstance(child, statement.__class__):
+        new_children += child.get_children()
+      else:
+        new_children.append(child)
+    statement.set_children(new_children)
+
+def push_or(statement):
+  if isinstance(statement, Or):
+    children = []
+    and_child = None
+    for child in statement.get_children():
+      child = push_or(child)
+      if isinstance(child, And) and and_child is None:
+        and_child = child
+      else:
+        children.append(child)
+    if and_child is not None:
+      statement = And(children=[Or(children=[c]+children) for c in and_child.get_children()])
+  if hasattr(statement, "get_children"):
+    statement.set_children([push_or(c) for c in statement.get_children()])
+  return statement
+
+def to_cnf(statement):
+  vertical_merge(statement)
+  statement = push_or(statement)
+  vertical_merge(statement)
+  return statement
+
 def cnf(statement):
   print(statement)
   print("\nremove equivalences")
@@ -122,6 +155,9 @@ def cnf(statement):
   print('\nRemoving For All quatifiers')
   statement = discard_forall(statement)
   print(statement)
+  print('\nTo CNF')
+  statement = to_cnf(statement)
+  print(statement)
 
 if __name__ == "__main__":
   p1 = Predicate('P', Variable('x'))
@@ -130,6 +166,11 @@ if __name__ == "__main__":
   f1 = Predicate('R', Variable('y'), Variable('x'))
   expression = ThereExists('x', Equivalence(p1, And(p2, ThereExists('y',And(p3,f1) )) ) )
   cnf(expression)
+
+  e = Or(And(Variable('x'), Or(Variable('w'), Variable('v'))),
+      And(Variable('y'), Or(Variable('z'), Variable('k'))))
+  e = to_cnf(e)
+  print(e)
 
   # test expressions for standardize apart
   # expression = ForAll('x', ThereExists('y', ThereExists('y', Predicate('p',Variable('x')))))
