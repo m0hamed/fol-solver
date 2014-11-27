@@ -91,7 +91,7 @@ class And(Connective):
   def flip(self):
     for x in self.children:
       x.negate()
-    return Or(self.children)
+    return Or(children=self.children)
 
   def __str__(self):
     separator = " " + CONJUNCTION + " "
@@ -111,7 +111,7 @@ class Or(Connective):
   def flip(self):
     for x in self.children:
       x.negate()
-    return And(self.children)
+    return And(children=self.children)
 
   def __str__(self):
     separator = " " + DISJUNCTION + " "
