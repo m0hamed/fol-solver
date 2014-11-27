@@ -1,5 +1,5 @@
 import pdb
-from copy import deepcopy
+from copy import deepcopy, copy
 
 class Atom():
   pass
@@ -35,26 +35,14 @@ class Function(Nested):
   def __eq__(self, f):
     return isinstance(f, Function) and f.name == self.name and f.children == self.children
 
-  def __str__(self):
-    if self.negated:
-      return "NOT[ " + super(Function,self).__str__() + " ]"
-    else:
-      return super(Function,self).__str__()
-
 class Variable(Atom):
-  def __init__(self, name, negated = False):
+  def __init__(self, name):
     self.name = name
-    self.negated = negated
 
   def __eq__(self, v):
     return isinstance(v, Variable) and v.name == self.name
 
-  def negate(self):
-    self.negated = not self.negated
-
   def __str__(self):
-    if self.negated:
-      return " Not [ " + self.name + " ] "
     return self.name
 
 class Predicate(Nested):
@@ -64,13 +52,19 @@ class Predicate(Nested):
 
   def __str__(self):
     if self.negated:
-      return "NOT[ " + super(Predicate,self).__str__() + " ]"
+      return chr(172) + super().__str__()
     else:
-      return super(Predicate,self).__str__()
+      return super().__str__()
 
 class Connective():
   def negate(self):
     self.negated = not self.negated
+
+  def get_children(self):
+    return self.children
+
+  def set_children(self, children):
+    self.children = children
 
   def push_negation(self):
     if self.negated:
@@ -90,13 +84,11 @@ class And(Connective):
       return Or(temp)
 
   def __str__(self):
-    s = " { "
-    for x in self.children:
-      s += str(x)
-      s += " } . { "
-    s = s[:-4]
+    # code point 8896 is the unicode for the and symbol
+    separator = " " + chr(8896) + " "
+    s = "{" + separator.join([str(x) for x in self.children]) + "}"
     if self.negated:
-      s = "Not [ " + s + " ]"
+      s = chr(172) + s
     return s
 
 class Or(Connective):
@@ -111,13 +103,11 @@ class Or(Connective):
     return And(temp)
 
   def __str__(self):
-    s = " { "
-    for x in self.children:
-      s += str(x)
-      s += " } | { "
-    s = s[:-4]
+    # code point 8897 is the unicode for the or symbol
+    separator = " " + chr(8897) + " "
+    s = "{" + separator.join([str(x) for x in self.children]) + "}"
     if self.negated:
-      s = "Not [ " + s + " ]"
+      s = chr(172) + s
     return s
 
 class Implication(Connective):
@@ -132,10 +122,16 @@ class Implication(Connective):
     return Or([temp, deepcopy(self.consequent)], self.negated)
 
   def __str__(self):
-    s = " [ " + str(self.anticedent) + " -> " + str(self.consequent) + " ] "
+    s = "[" + str(self.anticedent) + " ==> " + str(self.consequent) + "]"
     if self.negated:
-      s = "Not [ " + s + " ]"
+      s = chr(172) + s
     return s
+
+  def get_children(self):
+    return [self.anticedent, self.consequent]
+
+  def set_children(self, children):
+    self.anticedent, self.consequent = children
 
   def flip(self):
     temp = deepcopy(self.consequent)
@@ -152,15 +148,21 @@ class Equivalence(Connective):
     return And([Implication(self.statement1, self.statement2),
       Implication(self.statement2, self.statement1)],self.negated)
 
+  def get_children(self):
+    return [self.statement1, self.statement2]
+
+  def set_children(self, children):
+    self.statement1, self.statement2 = children
+
   def __str__(self):
-    s = " [ " + str(self.statement1) + " <-> " + str(self.statement2) + " ] "
+    s = "[" + str(self.statement1) + " <=> " + str(self.statement2) + "]"
     if self.negated:
-      s = "Not [ " + s + " ]"
+      s = chr(172) + s
     return s
 
   def flip(self):
-    return Or([Implication(deepcopy(self.statement1), deepcopy(self.statement2, True)),
-            Implication(deepcopy(self.statement2), deepcopy(self.statement1, True))])
+    return Or([Implication(deepcopy(self.statement1), deepcopy(self.statement2), negated=True),
+            Implication(deepcopy(self.statement2), deepcopy(self.statement1), negated=True)])
 
 class Quantifier():
   def negate(self):
@@ -184,9 +186,9 @@ class ForAll(Quantifier):
     return ThereExists(self.variable_name,temp)
 
   def __str__(self):
-    s = "FOR_ALL(" + str(self.variable_name) + ") {" + str(self.statement) + "}"
+    s = chr(8704) + self.variable_name + str(self.statement)
     if self.negated:
-      s = "Not [ " + s + " ]"
+      s = chr(172) + s
     return s
 
 class ThereExists(Quantifier):
@@ -201,17 +203,16 @@ class ThereExists(Quantifier):
     return ForAll(self.variable_name,temp)
 
   def __str__(self):
-    s = "THERE_EXISTS(" + str(self.variable_name) + ") {" + str(self.statement) + "}"
+    s = chr(8707) + self.variable_name + str(self.statement)
     if self.negated:
-      s = "Not [ " + s + " ]"
+      s = chr(172) + s
     return s
 
 def remove_equivalences(statement):
   if isinstance(statement, Predicate):
     pass
   elif isinstance(statement, And ) or isinstance(statement, Or):
-    for i in range(len(statement.children)):
-      statement.children[i] = remove_equivalences(statement.children[i])
+    statement.children = [remove_equivalences(c) for c in statement.children]
   elif isinstance(statement, Implication):
     statement.anticedent = remove_equivalences(statement.anticedent)
     statement.consequent = remove_equivalences(statement.consequent)
@@ -226,11 +227,9 @@ def remove_implications(statement):
   if isinstance(statement, Predicate):
     pass
   elif isinstance(statement, And ) or isinstance(statement, Or):
-    for i in range(len(statement.children)):
-      statement.children[i] = remove_implications(statement.children[i])
+    statement.children = [remove_implications(c) for c in statement.children]
   elif isinstance(statement, Implication):
-    statement = statement.get_or()
-    remove_implications(statement)
+    statement = remove_implications(statement.get_or())
   elif isinstance(statement, Quantifier):
     statement.statement = remove_implications(statement.statement)
   return statement
@@ -241,101 +240,38 @@ def push_nots_inwards(statement):
   elif isinstance(statement, And ) or isinstance(statement, Or):
     if statement.negated:
       statement = statement.push_negation()
-    for i in range(len(statement.children)):
-      statement.children[i] = push_nots_inwards(statement.children[i])
+    statement.children = [push_nots_inwards(c) for c in statement.children]
   elif isinstance(statement, Quantifier):
     statement = statement.push_negation()
     statement.statement = push_nots_inwards(statement.statement)
   return statement
 
-def standardize_apart(statement, variable_name = None, change_variable = False, change = ""):
+def get_new_variable(used_names):
+  for i in range(1, 5):
+    for char in range(ord("z"), ord("k"), -1):
+      char = chr(char)*i
+      if char not in used_names:
+        return char
+
+def standardize_apart(statement, scope={}, used_names=[]):
   if isinstance(statement, Variable):
-    if statement.name == variable_name and change_variable:
-      statement.name = statement.name + change
-  elif isinstance(statement, Nested):
-    temp = [None] * len(statement.get_children())
-    for i in range(len(statement.get_children())):
-      temp[i] = standardize_apart(statement.get_children()[i], variable_name, change_variable, change)
-    statement.set_children(temp)
-  elif isinstance(statement, And) or isinstance(statement, Or):
-    for i in range(len(statement.children)):
-      statement.children[i] = standardize_apart(statement.children[i],variable_name,True, change)
-    for i in range(len(statement.children)):
-      for j in range(i+1,len(statement.children)):
-        for k in (x for x in get_variables(statement.children[i]) if x in get_variables(statement.children[j])):
-          change = str(next(gen))
-          statement.children[j] = standardize_apart(statement.children[j],k,True, change)
+    if statement.name in scope:
+      statement.name = scope[statement.name]
+    else:
+      raise Exception()
   elif isinstance(statement, Quantifier):
-    var = statement.variable_name
-    if var == variable_name:
-      change = str(next(gen))
-      statement.variable_name = var + change
-      statement.statement = standardize_apart(statement.statement, var, True, change)
+    if statement.variable_name not in used_names:
+      scope[statement.variable_name] = statement.variable_name
+      used_names.append(statement.variable_name)
     else:
-      statement.statement = standardize_apart(statement.statement, variable_name, change_variable, change)
-      statement.statement = standardize_apart(statement.statement, var, False)
+      sub = get_new_variable(used_names)
+      scope[statement.variable_name] = sub
+      statement.variable_name = sub
+      used_names.append(sub)
+    statement.statement = standardize_apart(statement.statement, scope, used_names)
+  if hasattr(statement, "get_children"):
+    statement.set_children([standardize_apart(s, scope, used_names) for s in statement.get_children()])
   return statement
-
-def get_variables(statement, return_variable_name = False):
-  if isinstance(statement, Variable):
-    # changed this to return variable name to be used in change_variables
-    if return_variable_name:
-      yield statement.name
-    else:
-      yield statement
-  elif isinstance(statement, Nested):
-    for i in range(len(statement.get_children())):
-      for x in get_variables(statement.get_children()[i], return_variable_name):
-        yield x
-  elif isinstance(statement, And) or isinstance(statement, Or):
-    for i in range(len(statement.children)):
-      for x in get_variables(statement.children[i], return_variable_name):
-        yield x
-  elif isinstance(statement, Quantifier):
-    yield statement.variable_name
-    for x in get_variables(statement.statement, return_variable_name):
-      yield x
-
-def sequence_generator():
-  x = 0
-  while True:
-    yield x
-    x += 1
-
-def skolemize(statement, variable_name = ""):
-  if isinstance(statement, Nested):
-    if not variable_name == "":
-      statement = change_variables(statement, variable_name)
-  elif isinstance(statement, And) or isinstance(statement, Or):
-    for i in range(len(statement.children)):
-      statement.children[i] = skolemize(statement.children[i], variable_name)
-  elif isinstance(statement, ForAll):
-    var = statement.variable_name
-    # if not variable_name == "":
-    #   statement.statement = skolemize(statement.statement,variable_name)
-    # else:
-    statement.statement = skolemize(statement.statement,var)
-  elif isinstance(statement, ThereExists):
-    var = statement.variable_name
-    statement = statement.statement
-    if not variable_name == "":
-      statement = skolemize(statement,variable_name)
-    else:
-      statement = skolemize(statement,var)
-  return statement
-
-# changes all variables to be function of the given src_variable
-def change_variables(statement, src_variable_name, destination_variable_name = ""):
-  variables = set(get_variables(statement, True)) - set([src_variable_name])
-  temp = list(statement.get_children())[::]
-  for x in variables:
-    func = Function('f' + x, src_variable_name)
-    for k in range(len(statement.get_children())):
-      if statement.get_children()[k].name == x:
-        temp[k] = func
-  statement.set_children(temp)
-  return statement
-
 
 def discard_forall(statement):
   if isinstance(statement, Predicate):
@@ -364,13 +300,8 @@ def cnf(statement):
   print('\nStandardize Apart')
   statement = standardize_apart(statement)
   print(statement)
-  print('\nSkolomize')
-  statement = skolemize(statement)
-  print(statement)
 
 if __name__ == "__main__":
-  global gen
-  gen = sequence_generator()
   p1 = Predicate('P', Variable('x'))
   p2 = Predicate('Q', Variable('x'))
   p3 = Predicate('Q', Variable('y'))
@@ -386,18 +317,3 @@ if __name__ == "__main__":
   # print('\n\n')
   # expression = remove_implications(expression)
   # print(standardize_apart(expression))
-
-  # expression = Predicate('p', Variable('x'), Variable('y'), Variable('x'), Variable('z') )
-  # expression = ThereExists('y', Predicate('p', Variable('x'), Variable('y'), Variable('x') ))
-  # expression = ThereExists('w',ThereExists('z', ThereExists('y', Predicate('p', Variable('x'), Variable('y'), Variable('x') ))))
-  # expression = ThereExists('x',ThereExists('y', Predicate('p', Variable('x'), Variable('y') )))
-  # expression = ThereExists('x',And([ForAll('u', Predicate('G',Variable('u'))),ThereExists('y', ThereExists('z', Predicate('p', Variable('x'), Variable('y'), Variable('z') )))]))
-  # expression = ThereExists('y', And([Predicate('p',Variable('x')) , Predicate('p',Variable('x'))]))
-  # print(expression)
-  # expression = skolemize(expression)
-  # print(expression)
-
-  # expression = Predicate('p', Variable('x'), Variable('y'), Variable('x'), Variable('z') )
-  # print(expression)
-  # expression = change_variables(expression, 'y')
-  # print(expression)

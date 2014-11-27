@@ -7,9 +7,9 @@ if __name__ == "__main__":
         Function("g", Variable("x")))])
   e3 = Implication(e1, e2)
   e4 = Equivalence(e1,e2)
-  e5 = ThereExists(Variable("x"), And([Predicate("P", Function("f", Variable("x"))),
+  e5 = ThereExists("x", And([Predicate("P", Function("f", Variable("x"))),
         Predicate("P", Function("g", Variable("x")))]))
-  e6 = ForAll(Variable("x"), And([Predicate("P", Function("f", Variable("x"))),
+  e6 = ForAll("x", And([Predicate("P", Function("f", Variable("x"))),
         Predicate("P", Function("g", Variable("x")))]))
   print("Orignal Expression:")
   print("Expression 1: ", e1)
@@ -57,7 +57,7 @@ if __name__ == "__main__":
   print(remove_equivalences(test2))
 
   print("\n\nRemoving Implications")
-  test3 = Implication(Implication(Variable('x'), Variable('y')), Variable('z'))
+  test3 = Implication(Implication(Predicate("P", Variable('x')), Predicate("P", Variable('y'))), Predicate("P", Variable('z')))
   test4 = Implication(Implication(Implication(Variable('x'), Variable('x')), Variable('x')), Variable('z'))
   print(test3)
   print(remove_implications(test3))
