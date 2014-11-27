@@ -22,18 +22,6 @@ def remove_implications(statement):
     statement.set_children([remove_implications(c) for c in statement.get_children()])
   return statement
 
-def push_nots_inwards(statement):
-  if isinstance(statement, Predicate):
-    pass
-  elif isinstance(statement, And ) or isinstance(statement, Or):
-    if statement.negated:
-      statement = statement.push_negation()
-    statement.children = [push_nots_inwards(c) for c in statement.children]
-  elif isinstance(statement, Quantifier):
-    statement = statement.push_negation()
-    statement.statement = push_nots_inwards(statement.statement)
-  return statement
-
 def get_new_variable(used_names):
   for i in range(1, 5):
     for char in range(ord("z"), ord("k"), -1):
@@ -110,8 +98,8 @@ def cnf(statement):
   print("\nremove implications")
   statement = remove_implications(statement)
   print(statement)
-  print("\npush not inwards")
-  statement = push_nots_inwards(statement)
+  print("\npush negation")
+  statement = statement.push_negation()
   print(statement)
   print('\nStandardize Apart')
   statement = standardize_apart(statement)

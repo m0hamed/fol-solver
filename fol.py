@@ -22,7 +22,7 @@ class Nested(Atom):
     self.children = children
 
   def push_negation(self):
-    pass
+    return self
 
   def negate(self):
     self.negated = not self.negated
@@ -67,10 +67,11 @@ class Connective():
     self.children = children
 
   def push_negation(self):
+    temp = self
     if self.negated:
-      return self.flip()
-    else:
-      return self
+      temp = self.flip()
+    temp.children = [c.push_negation() for c in temp.children]
+    return temp
 
 class And(Connective):
   def __init__(self, predicates=[], negated=False):
@@ -78,10 +79,9 @@ class And(Connective):
     self.negated = negated
 
   def flip(self):
-      temp = deepcopy(self.children)
-      for x in temp:
-        x.negate()
-      return Or(temp)
+    for x in self.children:
+      x.negate()
+    return Or(self.children)
 
   def __str__(self):
     # code point 8896 is the unicode for the and symbol
@@ -97,10 +97,9 @@ class Or(Connective):
     self.negated = negated
 
   def flip(self):
-    temp = deepcopy(self.children)
-    for x in temp:
+    for x in self.children:
       x.negate()
-    return And(temp)
+    return And(self.children)
 
   def __str__(self):
     # code point 8897 is the unicode for the or symbol
@@ -175,10 +174,11 @@ class Quantifier():
     self.statement = children[0]
 
   def push_negation(self):
+    temp = self
     if self.negated:
-      return self.flip()
-    else:
-      return self
+      temp = self.flip()
+    temp.statement = temp.statement.push_negation()
+    return temp
 
 class ForAll(Quantifier):
   def __init__(self, variable_name, statement, negated = False):
