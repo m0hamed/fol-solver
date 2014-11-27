@@ -80,8 +80,11 @@ class Connective():
       return self
 
 class And(Connective):
-  def __init__(self, *predicates, negated=False):
-    self.children = predicates
+  def __init__(self, *params, children=[], negated=False):
+    if len(params):
+      self.children = params
+    else:
+      self.children = children
     self.negated = negated
 
   def flip(self):
@@ -98,8 +101,11 @@ class And(Connective):
     return s
 
 class Or(Connective):
-  def __init__(self, *predicates, negated=False):
-    self.children = predicates
+  def __init__(self, *params, children=[], negated=False):
+    if len(params):
+      self.children = params
+    else:
+      self.children = children
     self.negated = negated
 
   def flip(self):
