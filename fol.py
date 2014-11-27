@@ -276,20 +276,24 @@ def standardize_apart(statement, variable_name = None, change_variable = False, 
       statement.statement = standardize_apart(statement.statement, var, False)
   return statement
 
-def get_variables(statement):
+def get_variables(statement, return_variable_name = False):
   if isinstance(statement, Variable):
-    yield statement
+    # changed this to return variable name to be used in change_variables
+    if return_variable_name:
+      yield statement.name
+    else:
+      yield statement
   elif isinstance(statement, Nested):
     for i in range(len(statement.get_children())):
-      for x in get_variables(statement.get_children()[i]):
+      for x in get_variables(statement.get_children()[i], return_variable_name):
         yield x
   elif isinstance(statement, And) or isinstance(statement, Or):
     for i in range(len(statement.children)):
-      for x in get_variables(statement.children[i]):
+      for x in get_variables(statement.children[i], return_variable_name):
         yield x
   elif isinstance(statement, Quantifier):
     yield statement.variable_name
-    for x in get_variables(statement.statement):
+    for x in get_variables(statement.statement, return_variable_name):
       yield x
 
 def sequence_generator():
@@ -297,6 +301,54 @@ def sequence_generator():
   while True:
     yield x
     x += 1
+
+def skolemize(statement, variable_name = ""):
+  if isinstance(statement, Nested):
+    if not variable_name == "":
+      statement = change_variables(statement, variable_name)
+  elif isinstance(statement, And) or isinstance(statement, Or):
+    for i in range(len(statement.children)):
+      statement.children[i] = skolemize(statement.children[i], variable_name)
+  elif isinstance(statement, ForAll):
+    var = statement.variable_name
+    # if not variable_name == "":
+    #   statement.statement = skolemize(statement.statement,variable_name)
+    # else:
+    statement.statement = skolemize(statement.statement,var)
+  elif isinstance(statement, ThereExists):
+    var = statement.variable_name
+    statement = statement.statement
+    if not variable_name == "":
+      statement = skolemize(statement,variable_name)
+    else:
+      statement = skolemize(statement,var)
+  return statement
+
+# changes all variables to be function of the given src_variable
+def change_variables(statement, src_variable_name, destination_variable_name = ""):
+  variables = set(get_variables(statement, True)) - set([src_variable_name])
+  temp = list(statement.get_children())[::]
+  for x in variables:
+    func = Function('f' + x, src_variable_name)
+    for k in range(len(statement.get_children())):
+      if statement.get_children()[k].name == x:
+        temp[k] = func
+  statement.set_children(temp)
+  return statement
+
+
+def discard_forall(statement):
+  if isinstance(statement, Predicate):
+    pass
+  elif isinstance(statement, And ) or isinstance(statement, Or):
+    for i in range(len(statement.children)):
+      statement.children[i] = discard_forall(statement.children[i])
+  elif isinstance(statement, ForAll):
+      statement.statement = discard_forall(statement.statement)
+  elif isinstance(statement, ThereExists):
+    statement = statement.statement
+    statement = discard_forall(statement)
+  return statement
 
 def cnf(statement):
   print(statement)
@@ -312,6 +364,9 @@ def cnf(statement):
   print('\nStandardize Apart')
   statement = standardize_apart(statement)
   print(statement)
+  print('\nSkolomize')
+  statement = skolemize(statement)
+  print(statement)
 
 if __name__ == "__main__":
   global gen
@@ -319,7 +374,7 @@ if __name__ == "__main__":
   p1 = Predicate('P', Variable('x'))
   p2 = Predicate('Q', Variable('x'))
   p3 = Predicate('Q', Variable('y'))
-  f1 = Predicate('R', Variable('y'), Variable('y'))
+  f1 = Predicate('R', Variable('y'), Variable('x'))
   expression = ForAll('x', Equivalence(p1, And([p2, ThereExists('y',And([p3,f1 ]) )]) ) )
   cnf(expression)
 
@@ -331,3 +386,18 @@ if __name__ == "__main__":
   # print('\n\n')
   # expression = remove_implications(expression)
   # print(standardize_apart(expression))
+
+  # expression = Predicate('p', Variable('x'), Variable('y'), Variable('x'), Variable('z') )
+  # expression = ThereExists('y', Predicate('p', Variable('x'), Variable('y'), Variable('x') ))
+  # expression = ThereExists('w',ThereExists('z', ThereExists('y', Predicate('p', Variable('x'), Variable('y'), Variable('x') ))))
+  # expression = ThereExists('x',ThereExists('y', Predicate('p', Variable('x'), Variable('y') )))
+  # expression = ThereExists('x',And([ForAll('u', Predicate('G',Variable('u'))),ThereExists('y', ThereExists('z', Predicate('p', Variable('x'), Variable('y'), Variable('z') )))]))
+  # expression = ThereExists('y', And([Predicate('p',Variable('x')) , Predicate('p',Variable('x'))]))
+  # print(expression)
+  # expression = skolemize(expression)
+  # print(expression)
+
+  # expression = Predicate('p', Variable('x'), Variable('y'), Variable('x'), Variable('z') )
+  # print(expression)
+  # expression = change_variables(expression, 'y')
+  # print(expression)
