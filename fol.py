@@ -161,8 +161,8 @@ class Equivalence(Connective):
     return s
 
   def flip(self):
-    return Or([Implication(deepcopy(self.statement1), deepcopy(self.statement2, negated=True)),
-            Implication(deepcopy(self.statement2), deepcopy(self.statement1, negated=True))])
+    return Or([Implication(deepcopy(self.statement1), deepcopy(self.statement2), negated=True),
+            Implication(deepcopy(self.statement2), deepcopy(self.statement1), negated=True)])
 
 class Quantifier():
   def negate(self):
@@ -253,55 +253,35 @@ def push_nots_inwards(statement):
     statement.statement = push_nots_inwards(statement.statement)
   return statement
 
-def standardize_apart(statement, variable_name = None, change_variable = False, change = ""):
+def get_new_variable(used_names):
+  for i in range(1, 5):
+    for char in range(ord("z"), ord("k"), -1):
+      char = chr(char)*i
+      if char not in used_names:
+        return char
+
+def standardize_apart(statement, scope={}, used_names=[]):
   if isinstance(statement, Variable):
-    if statement.name == variable_name and change_variable:
-      statement.name = statement.name + change
-  elif isinstance(statement, Nested):
-    temp = [None] * len(statement.get_children())
-    for i in range(len(statement.get_children())):
-      temp[i] = standardize_apart(statement.get_children()[i], variable_name, change_variable, change)
-    statement.set_children(temp)
-  elif isinstance(statement, And) or isinstance(statement, Or):
-    for i in range(len(statement.children)):
-      statement.children[i] = standardize_apart(statement.children[i],variable_name,True, change)
-    for i in range(len(statement.children)):
-      for j in range(i+1,len(statement.children)):
-        for k in (x for x in get_variables(statement.children[i]) if x in get_variables(statement.children[j])):
-          change = str(next(gen))
-          statement.children[j] = standardize_apart(statement.children[j],k,True, change)
-  elif isinstance(statement, Quantifier):
-    var = statement.variable_name
-    if var == variable_name:
-      change = str(next(gen))
-      statement.variable_name = var + change
-      statement.statement = standardize_apart(statement.statement, var, True, change)
+    if statement.name in scope:
+      statement.name = scope[statement.name]
     else:
-      statement.statement = standardize_apart(statement.statement, variable_name, change_variable, change)
-      statement.statement = standardize_apart(statement.statement, var, False)
-  return statement
-
-def get_variables(statement):
-  if isinstance(statement, Variable):
-    yield statement
-  elif isinstance(statement, Nested):
-    for i in range(len(statement.get_children())):
-      for x in get_variables(statement.get_children()[i]):
-        yield x
-  elif isinstance(statement, And) or isinstance(statement, Or):
-    for i in range(len(statement.children)):
-      for x in get_variables(statement.children[i]):
-        yield x
+      raise Exception()
   elif isinstance(statement, Quantifier):
-    yield statement.variable_name
-    for x in get_variables(statement.statement):
-      yield x
-
-def sequence_generator():
-  x = 0
-  while True:
-    yield x
-    x += 1
+    if statement.variable_name not in used_names:
+      scope[statement.variable_name] = statement.variable_name
+      used_names.append(statement.variable_name)
+    else:
+      sub = get_new_variable(used_names)
+      scope[statement.variable_name] = sub
+      statement.variable_name = sub
+      used_names.append(sub)
+    statement.statement, scope, used_names = standardize_apart(statement.statement, scope, used_names)
+  if hasattr(statement, "get_children"):
+    temp = [None]*len(statement.get_children())
+    for i in range(len(statement.get_children())):
+      temp[i], scope, used_names = standardize_apart(statement.get_children()[i], scope, used_names)
+    statement.set_children(temp)
+  return statement, scope, used_names
 
 def cnf(statement):
   print(statement)
@@ -315,12 +295,10 @@ def cnf(statement):
   statement = push_nots_inwards(statement)
   print(statement)
   print('\nStandardize Apart')
-  statement = standardize_apart(statement)
+  statement, s, u = standardize_apart(statement)
   print(statement)
 
 if __name__ == "__main__":
-  global gen
-  gen = sequence_generator()
   p1 = Predicate('P', Variable('x'))
   p2 = Predicate('Q', Variable('x'))
   p3 = Predicate('Q', Variable('y'))
