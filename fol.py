@@ -73,7 +73,7 @@ class Connective():
       return self
 
 class And(Connective):
-  def __init__(self, predicates=[], negated=False):
+  def __init__(self, *predicates, negated=False):
     self.children = predicates
     self.negated = negated
 
@@ -81,7 +81,7 @@ class And(Connective):
       temp = deepcopy(self.children)
       for x in temp:
         x.negate()
-      return Or(temp)
+      return Or(*temp)
 
   def __str__(self):
     # code point 8896 is the unicode for the and symbol
@@ -92,7 +92,7 @@ class And(Connective):
     return s
 
 class Or(Connective):
-  def __init__(self, predicates=[], negated=False):
+  def __init__(self, *predicates, negated=False):
     self.children = predicates
     self.negated = negated
 
@@ -100,7 +100,7 @@ class Or(Connective):
     temp = deepcopy(self.children)
     for x in temp:
       x.negate()
-    return And(temp)
+    return And(*temp)
 
   def __str__(self):
     # code point 8897 is the unicode for the or symbol
@@ -117,9 +117,8 @@ class Implication(Connective):
     self.negated = negated
 
   def get_or(self):
-    temp = deepcopy(self.anticedent)
-    temp.negate()
-    return Or([temp, deepcopy(self.consequent)], self.negated)
+    self.anticedent.negate()
+    return Or(self.anticedent, self.consequent, negated=self.negated)
 
   def __str__(self):
     s = "[" + str(self.anticedent) + " ==> " + str(self.consequent) + "]"
@@ -136,7 +135,7 @@ class Implication(Connective):
   def flip(self):
     temp = deepcopy(self.consequent)
     temp.negate()
-    return And([deepcopy(self.anticedent),temp])
+    return And(deepcopy(self.anticedent),temp)
 
 class Equivalence(Connective):
   def __init__(self, statement1, statement2, negated = False):
@@ -145,8 +144,8 @@ class Equivalence(Connective):
     self.negated = negated
 
   def get_implications(self):
-    return And([Implication(self.statement1, self.statement2),
-      Implication(self.statement2, self.statement1)],self.negated)
+    return And(Implication(deepcopy(self.statement1), deepcopy(self.statement2)),
+      Implication(deepcopy(self.statement2), deepcopy(self.statement1)), negated=self.negated)
 
   def get_children(self):
     return [self.statement1, self.statement2]
@@ -161,8 +160,8 @@ class Equivalence(Connective):
     return s
 
   def flip(self):
-    return Or([Implication(deepcopy(self.statement1), deepcopy(self.statement2), negated=True),
-            Implication(deepcopy(self.statement2), deepcopy(self.statement1), negated=True)])
+    return Or(Implication(deepcopy(self.statement1), deepcopy(self.statement2), negated=True),
+            Implication(deepcopy(self.statement2), deepcopy(self.statement1), negated=True))
 
 class Quantifier():
   def negate(self):

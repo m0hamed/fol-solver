@@ -128,7 +128,7 @@ if __name__ == "__main__":
   p2 = Predicate('Q', Variable('x'))
   p3 = Predicate('Q', Variable('y'))
   f1 = Predicate('R', Variable('y'), Variable('x'))
-  expression = ForAll('x', Equivalence(p1, And([p2, ThereExists('y',And([p3,f1 ]) )]) ) )
+  expression = ThereExists('x', Equivalence(p1, And(p2, ThereExists('y',And(p3,f1) )) ) )
   cnf(expression)
 
   # test expressions for standardize apart
