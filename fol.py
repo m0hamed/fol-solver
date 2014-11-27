@@ -168,6 +168,12 @@ class Quantifier():
   def negate(self):
     self.negated = not self.negated
 
+  def get_children(self):
+    return [self.statement]
+
+  def set_children(self, children):
+    self.statement = children[0]
+
   def push_negation(self):
     if self.negated:
       return self.flip()
