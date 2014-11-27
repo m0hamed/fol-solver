@@ -79,13 +79,13 @@ def get_functions(statement):
 def skolemize(statement, to_skolemize={}, quantified_variables=[], used_names=None):
   if used_names is None:
     used_names = get_functions(statement)
-
   if isinstance(statement, Variable):
     if statement.name in to_skolemize:
-      statement = Function(to_skolemize[statement.name], *[Variable(v) for v in quantified_variables])
+      name, variables = to_skolemize[statement.name]
+      statement = Function(name, *[Variable(v) for v in variables])
   elif isinstance(statement, ThereExists):
     new_constant = get_new_constant(used_names)
-    to_skolemize[statement.variable_name] = new_constant
+    to_skolemize[statement.variable_name] = (new_constant, copy(quantified_variables))
     used_names.append(new_constant)
     statement = skolemize(statement.statement, to_skolemize, quantified_variables, used_names)
   elif isinstance(statement, ForAll):
