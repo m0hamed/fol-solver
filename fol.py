@@ -213,10 +213,6 @@ def remove_equivalences(statement):
     pass
   elif isinstance(statement, And ) or isinstance(statement, Or):
     statement.children = [remove_equivalences(c) for c in statement.children]
-<<<<<<< HEAD
-=======
-
->>>>>>> b42a35ca5c1e0e5db5f373cbcdc6f4737941bead
   elif isinstance(statement, Implication):
     statement.anticedent = remove_equivalences(statement.anticedent)
     statement.consequent = remove_equivalences(statement.consequent)
@@ -235,15 +231,8 @@ def remove_implications(statement):
     pass
   elif isinstance(statement, And ) or isinstance(statement, Or):
     statement.children = [remove_implications(c) for c in statement.children]
-<<<<<<< HEAD
   elif isinstance(statement, Implication):
     statement = remove_implications(statement.get_or())
-=======
-
-  elif isinstance(statement, Implication):
-    statement = remove_implications(statement.get_or())
-
->>>>>>> b42a35ca5c1e0e5db5f373cbcdc6f4737941bead
   elif isinstance(statement, Quantifier):
     statement.statement = remove_implications(statement.statement)
 
