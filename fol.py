@@ -275,13 +275,10 @@ def standardize_apart(statement, scope={}, used_names=[]):
       scope[statement.variable_name] = sub
       statement.variable_name = sub
       used_names.append(sub)
-    statement.statement, scope, used_names = standardize_apart(statement.statement, scope, used_names)
+    statement.statement = standardize_apart(statement.statement, scope, used_names)
   if hasattr(statement, "get_children"):
-    temp = [None]*len(statement.get_children())
-    for i in range(len(statement.get_children())):
-      temp[i], scope, used_names = standardize_apart(statement.get_children()[i], scope, used_names)
-    statement.set_children(temp)
-  return statement, scope, used_names
+    statement.set_children([standardize_apart(s, scope, used_names) for s in statement.get_children()])
+  return statement
 
 def cnf(statement):
   print(statement)
@@ -295,7 +292,7 @@ def cnf(statement):
   statement = push_nots_inwards(statement)
   print(statement)
   print('\nStandardize Apart')
-  statement, s, u = standardize_apart(statement)
+  statement = standardize_apart(statement)
   print(statement)
 
 if __name__ == "__main__":
