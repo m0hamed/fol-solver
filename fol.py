@@ -1,6 +1,13 @@
 import pdb
 from copy import deepcopy, copy
 
+# Unicode code points for pretty printing of mathematical symbols
+FORALL = chr(8704)
+THEREEXISTS = chr(8707)
+NOT = chr(172)
+CONJUNCTION = chr(8896)
+DISJUNCTION = chr(8897)
+
 class Atom():
   pass
 
@@ -52,7 +59,7 @@ class Predicate(Nested):
 
   def __str__(self):
     if self.negated:
-      return chr(172) + super().__str__()
+      return NOT + super().__str__()
     else:
       return super().__str__()
 
@@ -85,10 +92,10 @@ class And(Connective):
 
   def __str__(self):
     # code point 8896 is the unicode for the and symbol
-    separator = " " + chr(8896) + " "
+    separator = " " + CONJUNCTION + " "
     s = "{" + separator.join([str(x) for x in self.children]) + "}"
     if self.negated:
-      s = chr(172) + s
+      s = NOT + s
     return s
 
 class Or(Connective):
@@ -104,10 +111,10 @@ class Or(Connective):
 
   def __str__(self):
     # code point 8897 is the unicode for the or symbol
-    separator = " " + chr(8897) + " "
+    separator = " " + DISJUNCTION + " "
     s = "{" + separator.join([str(x) for x in self.children]) + "}"
     if self.negated:
-      s = chr(172) + s
+      s = NOT + s
     return s
 
 class Implication(Connective):
@@ -123,7 +130,7 @@ class Implication(Connective):
   def __str__(self):
     s = "[" + str(self.anticedent) + " ==> " + str(self.consequent) + "]"
     if self.negated:
-      s = chr(172) + s
+      s = NOT + s
     return s
 
   def get_children(self):
@@ -156,7 +163,7 @@ class Equivalence(Connective):
   def __str__(self):
     s = "[" + str(self.statement1) + " <=> " + str(self.statement2) + "]"
     if self.negated:
-      s = chr(172) + s
+      s = NOT + s
     return s
 
   def flip(self):
@@ -191,9 +198,9 @@ class ForAll(Quantifier):
     return ThereExists(self.variable_name,temp)
 
   def __str__(self):
-    s = chr(8704) + self.variable_name + str(self.statement)
+    s = FORALL + self.variable_name + str(self.statement)
     if self.negated:
-      s = chr(172) + s
+      s = NOT + s
     return s
 
 class ThereExists(Quantifier):
@@ -208,7 +215,7 @@ class ThereExists(Quantifier):
     return ForAll(self.variable_name,temp)
 
   def __str__(self):
-    s = chr(8707) + self.variable_name + str(self.statement)
+    s = THEREEXISTS + self.variable_name + str(self.statement)
     if self.negated:
-      s = chr(172) + s
+      s = NOT + s
     return s
