@@ -91,7 +91,6 @@ class And(Connective):
       return Or(*temp)
 
   def __str__(self):
-    # code point 8896 is the unicode for the and symbol
     separator = " " + CONJUNCTION + " "
     s = "{" + separator.join([str(x) for x in self.children]) + "}"
     if self.negated:
@@ -110,7 +109,6 @@ class Or(Connective):
     return And(*temp)
 
   def __str__(self):
-    # code point 8897 is the unicode for the or symbol
     separator = " " + DISJUNCTION + " "
     s = "{" + separator.join([str(x) for x in self.children]) + "}"
     if self.negated:
