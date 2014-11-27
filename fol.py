@@ -1,5 +1,5 @@
 import pdb
-from copy import deepcopy
+from copy import deepcopy, copy
 
 class Atom():
   pass
@@ -59,6 +59,12 @@ class Predicate(Nested):
 class Connective():
   def negate(self):
     self.negated = not self.negated
+
+  def get_children(self):
+    return self.children
+
+  def set_children(self, children):
+    self.children = children
 
   def push_negation(self):
     if self.negated:
@@ -121,6 +127,12 @@ class Implication(Connective):
       s = chr(172) + s
     return s
 
+  def get_children(self):
+    return [self.anticedent, self.consequent]
+
+  def set_children(self, children):
+    self.anticedent, self.consequent = children
+
   def flip(self):
     temp = deepcopy(self.consequent)
     temp.negate()
@@ -135,6 +147,12 @@ class Equivalence(Connective):
   def get_implications(self):
     return And([Implication(self.statement1, self.statement2),
       Implication(self.statement2, self.statement1)],self.negated)
+
+  def get_children(self):
+    return [self.statement1, self.statement2]
+
+  def set_children(self, children):
+    self.statement1, self.statement2 = children
 
   def __str__(self):
     s = "[" + str(self.statement1) + " <=> " + str(self.statement2) + "]"
