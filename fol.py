@@ -211,31 +211,23 @@ class ThereExists(Quantifier):
 def remove_equivalences(statement):
   if isinstance(statement, Predicate):
     pass
-  elif isinstance(statement, And ) or isinstance(statement, Or):
-    statement.children = [remove_equivalences(c) for c in statement.children]
-  elif isinstance(statement, Implication):
-    statement.anticedent = remove_equivalences(statement.anticedent)
-    statement.consequent = remove_equivalences(statement.consequent)
-
   elif isinstance(statement, Equivalence):
-    statement = statement.get_implications()
-
-    return remove_equivalences(statement)
-
+    statement = remove_equivalences(statement.get_implications())
   elif isinstance(statement, Quantifier):
     statement.statement = remove_equivalences(statement.statement)
+  elif hasattr(statement, "get_children"):
+    statement.set_children([remove_equivalences(s) for s in statement.get_children()])
   return statement
 
 def remove_implications(statement):
   if isinstance(statement, Predicate):
     pass
-  elif isinstance(statement, And ) or isinstance(statement, Or):
-    statement.children = [remove_implications(c) for c in statement.children]
   elif isinstance(statement, Implication):
     statement = remove_implications(statement.get_or())
   elif isinstance(statement, Quantifier):
     statement.statement = remove_implications(statement.statement)
-
+  elif hasattr(statement, "get_children"):
+    statement.set_children([remove_implications(c) for c in statement.get_children()])
   return statement
 
 def push_nots_inwards(statement):
