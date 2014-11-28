@@ -195,7 +195,6 @@ def cnf(statement):
   print(statement)
   print('\nTo Clause Form')
   statement = to_clause_form(statement)
-  print(statement)
   print_clause_form(statement)
   print('\nTo Clause Form Standardize Apart')
   statement = clause_form_standardize_apart(statement)
