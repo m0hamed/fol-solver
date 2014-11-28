@@ -98,7 +98,7 @@ def vertical_merge(statement):
       if isinstance(child, statement.__class__):
         new_children += child.get_children()
       else:
-        new_children.append(child)
+        new_children.append(deepcopy(child))
     statement.set_children(new_children)
 
 def push_or(statement):
@@ -123,6 +123,53 @@ def to_cnf(statement):
   vertical_merge(statement)
   return statement
 
+def to_clause_form(statement):
+  s = set()
+  for j in statement.get_children():
+    temp = set()
+    for i in j.get_children():
+      temp.add(i)
+    temp = frozenset(temp)
+    s.add(temp)
+  return s
+
+def print_clause_form(statement):
+  s = "{\n"
+  for i in statement:
+    s += " { "
+    for j in i:
+      s += str(j) + ", "
+    s = s[:-2] + " },\n"
+  s += "}"
+  print(s)
+
+def get_variables(statement):
+  return  set(i.name for j in statement for i in j.get_children())
+
+def change_clause_form_variable(statement, src_name, destination_name):
+  for j in statement:
+    for i in j.get_children():
+      if i.name == src_name:
+        i.name = destination_name
+  return statement
+
+def clause_form_standardize_apart(clause_form):
+  standardized_clause_form = set()
+  clause_form = list(clause_form)
+  standardized_clause_form.add(frozenset(clause_form[0]))
+  used_names = get_variables(clause_form[0])
+  for i in range(1,len(clause_form)):
+    temp = list(clause_form[i])
+    common_variables = get_variables(clause_form[i]).intersection(used_names)
+    used_names.update(get_variables(clause_form[i]))
+    if not common_variables == list():
+      for j in common_variables:
+        new_variable = get_new_variable(used_names)
+        change_clause_form_variable(temp, j, new_variable)
+        used_names.add(new_variable)
+    standardized_clause_form.add(frozenset(temp))
+  return standardized_clause_form
+
 def cnf(statement):
   print(statement)
   print("\nremove equivalences")
@@ -146,6 +193,13 @@ def cnf(statement):
   print('\nTo CNF')
   statement = to_cnf(statement)
   print(statement)
+  print('\nTo Clause Form')
+  statement = to_clause_form(statement)
+  print(statement)
+  print_clause_form(statement)
+  print('\nTo Clause Form Standardize Apart')
+  statement = clause_form_standardize_apart(statement)
+  print_clause_form(statement)
 
 if __name__ == "__main__":
   p1 = Predicate('P', Variable('x'))
@@ -155,10 +209,10 @@ if __name__ == "__main__":
   expression = ThereExists('x', Equivalence(p1, And(p2, ThereExists('y',And(p3,f1) )) ) )
   cnf(expression)
 
-  e = Or(And(Variable('x'), Or(Variable('w'), Variable('v'))),
-      And(Variable('y'), Or(Variable('z'), Variable('k'))))
-  e = to_cnf(e)
-  print(e)
+  # e = Or(And(Variable('x'), Or(Variable('w'), Variable('v'))),
+  #     And(Variable('y'), Or(Variable('z'), Variable('k'))))
+  # e = to_cnf(e)
+  # print(e)
 
   # test expressions for standardize apart
   # expression = ForAll('x', ThereExists('y', ThereExists('y', Predicate('p',Variable('x')))))
