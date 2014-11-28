@@ -1,7 +1,7 @@
 from fol import *
 
 def remove_equivalences(statement):
-  if isinstance(statement, Predicate):
+  if isinstance(statement, Nested):
     pass
   elif isinstance(statement, Equivalence):
     statement = remove_equivalences(statement.get_implications())
@@ -12,7 +12,7 @@ def remove_equivalences(statement):
   return statement
 
 def remove_implications(statement):
-  if isinstance(statement, Predicate):
+  if isinstance(statement, Nested):
     pass
   elif isinstance(statement, Implication):
     statement = remove_implications(statement.get_or())
