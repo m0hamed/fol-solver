@@ -35,7 +35,7 @@ class Nested(Atom):
     self.negated = not self.negated
 
   def __hash__(self):
-    return hash(id(self) )
+    return hash(id(self))
 
   def __eq__(self, other):
     return id(self) == id(other)
@@ -47,6 +47,9 @@ class Function(Nested):
 
   def __eq__(self, f):
     return isinstance(f, Function) and f.name == self.name and f.children == self.children
+
+  def __hash__(self):
+    return hash(id(self))
 
 class Variable(Atom):
   def __init__(self, name):

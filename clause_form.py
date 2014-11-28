@@ -127,8 +127,11 @@ def to_clause_form(statement):
   s = set()
   for j in statement.get_children():
     temp = set()
-    for i in j.get_children():
-      temp.add(i)
+    if not isinstance(j, Nested):
+      for i in j.get_children():
+        temp.add(i)
+    else:
+      temp.add(j)
     temp = frozenset(temp)
     s.add(temp)
   return s
@@ -208,16 +211,9 @@ if __name__ == "__main__":
   expression = ForAll('x', Equivalence(p1, And(p2, ThereExists('y',And(p3,f1) )) ) )
   cnf(expression)
 
-  # e = Or(And(Variable('x'), Or(Variable('w'), Variable('v'))),
-  #     And(Variable('y'), Or(Variable('z'), Variable('k'))))
-  # e = to_cnf(e)
-  # print(e)
-
-  # test expressions for standardize apart
-  # expression = ForAll('x', ThereExists('y', ThereExists('y', Predicate('p',Variable('x')))))
-  # expression = And([ForAll('x',Predicate('P', Variable('x'))), ThereExists('x',Predicate('P', Variable('x'))),ThereExists('x',Predicate('P', Variable('x')))])
-  # expression = ForAll('x', And([ ThereExists('y', Predicate('p',Variable('y'))), ThereExists('y', Predicate('p',Variable('y')))]))
-  # print(expression)
-  # print('\n\n')
-  # expression = remove_implications(expression)
-  # print(standardize_apart(expression))
+  p1 = Predicate('P', Variable('x'), negated = True)
+  p2 = Predicate('Q', Variable('x'))
+  p3 = ForAll('x', Implication(p2, p1))
+  p4 = Predicate('P', Variable('x'))
+  expression = ThereExists('x', And(children=[p4, p3]))
+  cnf(expression)
