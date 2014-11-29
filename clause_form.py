@@ -123,88 +123,80 @@ def to_cnf(statement):
   return statement
 
 def to_clause_form(statement):
-  s = set()
-  for j in statement.get_children():
-    temp = set()
-    if not isinstance(j, Nested):
-      for i in j.get_children():
-        temp.add(i)
+  clause_form = []
+  for d in statement.get_children():
+    if isinstance(d, Predicate):
+      clause_form.append(set([d]))
     else:
-      temp.add(j)
-    temp = frozenset(temp)
-    s.add(temp)
+      clause_form.append(set(d.get_children()))
+  return clause_form
+
+def stringify_clause_form(clause_form):
+  s = "{\n {"
+  s +="},\n {".join([", ".join([s for s in map(str, x)]) for x in clause_form])
+  s += "}\n}"
   return s
 
-def print_clause_form(statement):
-  s = "{\n"
-  for i in statement:
-    s += " { "
-    for j in i:
-      s += str(j) + ", "
-    s = s[:-2] + " },\n"
-  s += "}"
-  print(s)
-
-def get_variables(statement):
-  return  set(i.name for j in statement for i in j.get_children())
-
-def change_clause_form_variable(statement, src_name, destination_name):
-  for j in statement:
-    for i in j.get_children():
-      if i.name == src_name:
-        i.name = destination_name
-  return statement
+def change_clause_form_variable(clause, src_name, destination_name):
+  if hasattr(clause, "__iter__"):
+    clause = [change_clause_form_variable(c, src_name, destination_name)
+        for c in clause]
+  elif hasattr(clause, "get_children"):
+    clause.set_children([change_clause_form_variable(c, src_name,
+      destination_name) for c in clause.get_children()])
+  else:
+    if isinstance(clause, Variable) and clause.name == src_name:
+      clause.name = destination_name
+  return clause
 
 def clause_form_standardize_apart(clause_form):
-  standardized_clause_form = set()
-  clause_form = list(clause_form)
-  standardized_clause_form.add(frozenset(clause_form[0]))
-  used_names = get_variables(clause_form[0])
-  for i in range(1,len(clause_form)):
-    temp = list(clause_form[i])
-    common_variables = get_variables(clause_form[i]).intersection(used_names)
-    used_names.update(get_variables(clause_form[i]))
-    if not common_variables == list():
-      for j in common_variables:
-        new_variable = get_new_variable(used_names)
-        change_clause_form_variable(temp, j, new_variable)
-        used_names.add(new_variable)
-    standardized_clause_form.add(frozenset(temp))
+  standardized_clause_form = []
+  used_names = set()
+  for clause in clause_form:
+    common_variables = \
+        set(get_all_of_type(clause, Variable)).intersection(used_names)
+    used_names.update(get_all_of_type(clause, Variable))
+    for variable in common_variables:
+      new_variable = get_new_variable(used_names)
+      clause = change_clause_form_variable(clause, variable, new_variable)
+      used_names.add(new_variable)
+    standardized_clause_form.append(clause)
   return standardized_clause_form
 
-def cnf(statement):
+def get_clause_form(statement, trace=False):
   print(statement)
-  print("\nremove equivalences")
+  pp(trace, "\nremove equivalences")
   statement = remove_equivalences(statement)
-  print(statement)
-  print("\nremove implications")
+  pp(trace, statement)
+  pp(trace, "\nremove implications")
   statement = remove_implications(statement)
-  print(statement)
-  print("\npush negation")
+  pp(trace, statement)
+  pp(trace, "\npush negation")
   statement = statement.push_negation()
-  print(statement)
-  print('\nStandardize Apart')
+  pp(trace, statement)
+  pp(trace, '\nStandardize Apart')
   statement = standardize_apart(statement)
-  print(statement)
-  print('\nSkolemize')
+  pp(trace, statement)
+  pp(trace, '\nSkolemize')
   statement = skolemize(statement)
-  print(statement)
-  print('\nRemoving For All quatifiers')
+  pp(trace, statement)
+  pp(trace, '\nRemoving For All quatifiers')
   statement = discard_forall(statement)
-  print(statement)
-  print('\nTo CNF')
+  pp(trace, statement)
+  pp(trace, '\nTo CNF')
   statement = to_cnf(statement)
-  print(statement)
-  print('\nTo Clause Form')
+  pp(trace, statement)
+  pp(trace, '\nTo Clause Form')
   statement = to_clause_form(statement)
-  print_clause_form(statement)
-  print('\nTo Clause Form Standardize Apart')
+  pp(trace, stringify_clause_form(statement))
+  pp(trace, '\nTo Clause Form Standardize Apart')
   statement = clause_form_standardize_apart(statement)
-  print_clause_form(statement)
+  print("Final clause form:")
+  print(stringify_clause_form(statement))
 
 if __name__ == "__main__":
   expression = \
-    ThereExists('x',
+    ForAll('x',
       Equivalence(
         Predicate('P', Variable('x')),
         And(
@@ -218,11 +210,11 @@ if __name__ == "__main__":
         )
       )
     )
-  cnf(expression)
+  get_clause_form(expression)
 
   p1 = Predicate('P', Variable('x'), negated = True)
   p2 = Predicate('Q', Variable('x'))
   p3 = ForAll('x', Implication(p2, p1))
   p4 = Predicate('P', Variable('x'))
   expression = ThereExists('x', And(children=[p4, p3]))
-  cnf(expression)
+  get_clause_form(expression)
