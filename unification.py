@@ -59,9 +59,9 @@ def unify_variable(variable, expression, mgu, trace):
 if __name__ == "__main__":
   e1 = Predicate("P", Function("f", Variable("u")), Variable("v"), Variable("v"))
   e2 = Predicate("P", Variable("x"), Function("g", Variable("x")), Function("g", Function("f", Function("a"))))
-  mgu = unify(e1, e2, trace=True)
   print("Expression 1: ", e1)
   print("Expression 2: ", e2)
+  mgu = unify(e1, e2, trace=True)
   if mgu is False:
     print("Not unifiable")
   else:
@@ -69,9 +69,9 @@ if __name__ == "__main__":
 
   e1 = Predicate("P", Variable("a"), Variable("y"), Function("f", Variable("y")))
   e2 = Predicate("P", Variable("z"), Variable("z"), Variable("u"))
-  mgu = unify(e1, e2)
   print("Expression 1: ", e1)
   print("Expression 2: ", e2)
+  mgu = unify(e1, e2)
   if mgu is False:
     print("Not unifiable")
   else:
@@ -79,9 +79,9 @@ if __name__ == "__main__":
 
   e1 = Function("f", Variable("x"), Function("g", Variable("x")), Variable("x"))
   e2 = Function("f", Function("g", Variable("u")), Function("g", Function("g", Function("z"))), Variable("z"))
-  mgu = unify(e1, e2)
   print("Expression 1: ", e1)
   print("Expression 2: ", e2)
+  mgu = unify(e1, e2)
   if mgu is False:
     print("Not unifiable")
   else:
