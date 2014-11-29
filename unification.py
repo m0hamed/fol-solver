@@ -1,4 +1,4 @@
-from fol import Predicate, Function, Variable, Nested, Atom
+from fol import Predicate, Function, Variable, pp
 
 class Substitution:
   def __init__(self, variable, replacement):
@@ -55,10 +55,6 @@ def unify_variable(variable, expression, mgu, trace):
     s = Substitution(variable, t)
     pp(trace, "MGU now is: ", ", ".join(map(str, mgu+[s])))
     return mgu+[s]
-
-def pp(trace, *args):
-  if trace:
-    print(*args)
 
 if __name__ == "__main__":
   e1 = Predicate("P", Function("f", Variable("u")), Variable("v"), Variable("v"))

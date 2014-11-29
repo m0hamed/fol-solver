@@ -220,3 +220,8 @@ class ThereExists(Quantifier):
     if self.negated:
       s = NOT + s
     return s
+
+def pp(trace, *args):
+  if trace:
+    print(*args)
+
