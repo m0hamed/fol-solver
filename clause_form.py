@@ -53,17 +53,19 @@ def standardize_apart(statement, scope={}, used_names=[]):
     statement.set_children([standardize_apart(s, scope, used_names) for s in statement.get_children()])
   return statement
 
-def get_functions(statement):
-  if isinstance(statement, Function):
+def get_all_of_type(statement, klass):
+  if isinstance(statement, klass):
     return [statement.name]
-  if hasattr(statement, "get_children"):
-    return [f for s in statement.get_children() for f in get_functions(s)]
+  elif hasattr(statement, "get_children"):
+    return [f for s in statement.get_children() for f in get_all_of_type(s, klass)]
+  elif hasattr(statement, "__iter__"):
+    return [f for s in statement for f in get_all_of_type(s, klass)]
   else:
     return []
 
 def skolemize(statement, to_skolemize={}, quantified_variables=[], used_names=None):
   if used_names is None:
-    used_names = get_functions(statement)
+    used_names = get_all_of_type(statement, Function)
   if isinstance(statement, Variable):
     if statement.name in to_skolemize:
       name, variables = to_skolemize[statement.name]
