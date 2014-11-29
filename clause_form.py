@@ -145,11 +145,21 @@ def cnf(statement):
   print(statement)
 
 if __name__ == "__main__":
-  p1 = Predicate('P', Variable('x'))
-  p2 = Predicate('Q', Variable('x'))
-  p3 = Predicate('Q', Variable('y'))
-  f1 = Predicate('R', Variable('y'), Variable('x'))
-  expression = ThereExists('x', Equivalence(p1, And(p2, ThereExists('y',And(p3,f1) )) ) )
+  expression = \
+    ThereExists('x',
+      Equivalence(
+        Predicate('P', Variable('x')),
+        And(
+          Predicate('Q', Variable('x')),
+          ThereExists('y',
+            And(
+              Predicate('Q', Variable('y')),
+              Predicate('R', Variable('y'), Variable('x'))
+            )
+          )
+        )
+      )
+    )
   cnf(expression)
 
   e = Or(And(Variable('x'), Or(Variable('w'), Variable('v'))),
