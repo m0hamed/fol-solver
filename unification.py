@@ -15,12 +15,12 @@ def unify(formula1, formula2, mgu=[], trace=False):
   if formula1 == formula2:
     return mgu
 
-  if isinstance(formula1, Nested) and isinstance(formula2, Nested):
+  if hasattr(formula1, 'get_children') and hasattr(formula2, 'get_children'):
     if type(formula1) != type(formula2) or formula1.name != formula2.name \
-        or len(formula1.children) != len(formula2.children):
+        or len(formula1.get_children()) != len(formula2.get_children()):
       return false
     else:
-      for a,b in zip(formula1.children, formula2.children):
+      for a,b in zip(formula1.get_children(), formula2.get_children()):
         mgu = unify(a, b, mgu, trace)
       return mgu
 
@@ -40,9 +40,9 @@ def substitute(mu, expression):
 def occurs_in(variable, expression):
   if expression == variable:
     return True
-  if not isinstance(expression, Nested):
+  if not hasattr(expression, 'get_children'):
     return False
-  return any([occurs_in(variable, e) for e in expression.children])
+  return any([occurs_in(variable, e) for e in expression.get_children()])
 
 def unify_variable(variable, expression, mgu, trace):
   pp(trace, "Unifying variable:", variable, "with expression:", expression)

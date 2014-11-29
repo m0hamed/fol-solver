@@ -8,10 +8,7 @@ NOT = chr(172)
 CONJUNCTION = chr(8896)
 DISJUNCTION = chr(8897)
 
-class Atom():
-  pass
-
-class Nested(Atom):
+class Nested():
   def __init__(self, name, children=[]):
     self.children = children
     self.name = name
@@ -42,7 +39,7 @@ class Function(Nested):
   def __eq__(self, f):
     return isinstance(f, Function) and f.name == self.name and f.children == self.children
 
-class Variable(Atom):
+class Variable():
   def __init__(self, name):
     self.name = name
 
