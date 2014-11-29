@@ -31,6 +31,12 @@ class Nested():
   def negate(self):
     self.negated = not self.negated
 
+  def __hash__(self):
+    return hash(id(self))
+
+  def __eq__(self, other):
+    return id(self) == id(other)
+
 class Function(Nested):
   def __init__(self, name, *children, negated=False):
     super().__init__(name, children)
@@ -38,6 +44,9 @@ class Function(Nested):
 
   def __eq__(self, f):
     return isinstance(f, Function) and f.name == self.name and f.children == self.children
+
+  def __hash__(self):
+    return hash(id(self))
 
 class Variable():
   def __init__(self, name):
