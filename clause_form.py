@@ -38,10 +38,7 @@ def get_new_constant(used_names):
 
 def standardize_apart(statement, scope={}, used_names=[]):
   if isinstance(statement, Variable):
-    if statement.name in scope:
-      statement.name = scope[statement.name]
-    else:
-      raise Exception()
+    statement.name = scope[statement.name]
   elif isinstance(statement, Quantifier):
     if statement.variable_name not in used_names:
       scope[statement.variable_name] = statement.variable_name
