@@ -210,7 +210,7 @@ if __name__ == "__main__":
         )
       )
     )
-  get_clause_form(expression)
+  get_clause_form(expression, True)
 
   p1 = Predicate('P', Variable('x'), negated = True)
   p2 = Predicate('Q', Variable('x'))

@@ -66,6 +66,7 @@ if __name__ == "__main__":
     print("Not unifiable")
   else:
     print("MGU: ", ", ".join(map(str, mgu)))
+  print()
 
   e1 = Predicate("P", Variable("a"), Variable("y"), Function("f", Variable("y")))
   e2 = Predicate("P", Variable("z"), Variable("z"), Variable("u"))
@@ -76,6 +77,7 @@ if __name__ == "__main__":
     print("Not unifiable")
   else:
     print("MGU: ", ", ".join(map(str, mgu)))
+  print()
 
   e1 = Function("f", Variable("x"), Function("g", Variable("x")), Variable("x"))
   e2 = Function("f", Function("g", Variable("u")), Function("g", Function("g", Function("z"))), Variable("z"))
@@ -86,3 +88,4 @@ if __name__ == "__main__":
     print("Not unifiable")
   else:
     print("MGU: ", ", ".join(map(str, mgu)))
+  print()
