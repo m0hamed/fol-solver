@@ -1,8 +1,8 @@
 from fol import *
 
 def remove_equivalences(statement):
-# this condition checks if the statement is either predicate or funciton
-# then it cant have an inner equivalence so no need to check inside it
+# this condition checks if the statement is either predicate or function
+# then it can't have an inner equivalence so no need to check inside it
   if isinstance(statement, Nested):
     pass
   elif isinstance(statement, Equivalence):
@@ -26,7 +26,7 @@ def remove_implications(statement):
   if isinstance(statement, Nested):
     pass
   elif isinstance(statement, Implication):
-# this condition checks if the statement is an implication. If so it returns the 
+# this condition checks if the statement is an implication. If so it returns the
 # or form of this implication after removing the implications from it
     statement = remove_implications(statement.get_or())
   elif isinstance(statement, Quantifier):
@@ -57,6 +57,7 @@ def get_new_constant(used_names):
       if char not in used_names:
         return char
 
+# this method tries to change any repeated variable names
 def standardize_apart(statement, scope={}, used_names=[]):
   if isinstance(statement, Variable):
     statement.name = scope[statement.name]
@@ -74,33 +75,45 @@ def standardize_apart(statement, scope={}, used_names=[]):
     statement.set_children([standardize_apart(s, scope, used_names) for s in statement.get_children()])
   return statement
 
+# this method gets all objects of a certain class
 def get_all_of_type(statement, klass):
   if isinstance(statement, klass):
     return [statement.name]
   elif hasattr(statement, "get_children"):
-    return [f for s in statement.get_children() for f in get_all_of_type(s, klass)]
+    return [f for s in statement.get_children() for f in
+        get_all_of_type(s, klass)]
   elif hasattr(statement, "__iter__"):
     return [f for s in statement for f in get_all_of_type(s, klass)]
   else:
     return []
 
-def skolemize(statement, to_skolemize={}, quantified_variables=[], used_names=None):
+# skolemize tries to create a new skolem variable for every ThereExists
+# quantified variable. It also keeps track of universal quantifiers in scope
+def skolemize(statement, to_skolemize={}, quantified_variables=[],
+    used_names=None):
+  # if I do not have any names then get the used names in the statement
   if used_names is None:
     used_names = get_all_of_type(statement, Function)
   if isinstance(statement, Variable):
+  # if it is a variable check if it is marked to be skolemized
     if statement.name in to_skolemize:
+      # get new variable name and universally quantified variables
       name, variables = to_skolemize[statement.name]
       statement = Function(name, *[Variable(v) for v in variables])
+  # if it is a there exists quantifier then mark the variable to be skolemized
+  # and keep track of universally quantified variables
   elif isinstance(statement, ThereExists):
     new_constant = get_new_constant(used_names)
     to_skolemize[statement.variable_name] = (new_constant, copy(quantified_variables))
     used_names.append(new_constant)
     statement = skolemize(statement.statement, to_skolemize, quantified_variables, used_names)
+  # forAll variables are kept in the list of universal quantifiers
   elif isinstance(statement, ForAll):
     quantified_variables.append(statement.variable_name)
     statement.statement = skolemize(statement.statement, to_skolemize, quantified_variables, used_names)
   elif hasattr(statement, "get_children"):
-    statement.set_children([skolemize(s, to_skolemize, quantified_variables, used_names) for s in statement.get_children()])
+    statement.set_children([skolemize(s, to_skolemize,
+      copy(quantified_variables), used_names) for s in statement.get_children()])
   return statement
 
 # this method removes all ForAll statmenets from a given expression
