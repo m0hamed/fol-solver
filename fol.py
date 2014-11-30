@@ -10,6 +10,7 @@ NOT = chr(172)
 CONJUNCTION = chr(8896)
 DISJUNCTION = chr(8897)
 
+# Parent class for predicates and functions
 class Nested():
   def __init__(self, name, children=[]):
     self.children = children
@@ -39,6 +40,7 @@ class Nested():
   def __eq__(self, other):
     return id(self) == id(other)
 
+# function symbol
 class Function(Nested):
   def __init__(self, name, *children, negated=False):
     super().__init__(name, children)
@@ -50,6 +52,7 @@ class Function(Nested):
   def __hash__(self):
     return hash(id(self))
 
+# variable
 class Variable():
   def __init__(self, name):
     self.name = name
@@ -60,6 +63,7 @@ class Variable():
   def __str__(self):
     return self.name
 
+# predicate
 class Predicate(Nested):
   def __init__(self, name, *children, negated=False):
     super().__init__(name, children)
@@ -71,6 +75,7 @@ class Predicate(Nested):
     else:
       return super().__str__()
 
+# parent class for connectives such as And, Or
 class Connective():
   def negate(self):
     self.negated = not self.negated
@@ -88,6 +93,7 @@ class Connective():
     temp.children = [c.push_negation() for c in temp.children]
     return temp
 
+# conjunction
 class And(Connective):
   def __init__(self, *params, children=[], negated=False):
     if len(params):
@@ -108,6 +114,7 @@ class And(Connective):
       s = NOT + s
     return s
 
+# disjunction
 class Or(Connective):
   def __init__(self, *params, children=[], negated=False):
     if len(params):
@@ -128,6 +135,7 @@ class Or(Connective):
       s = NOT + s
     return s
 
+# implication
 class Implication(Connective):
   def __init__(self, anticedent, consequent, negated = False):
     self.anticedent = anticedent

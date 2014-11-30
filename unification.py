@@ -60,7 +60,7 @@ def unify_variable(variable, expression, mgu, trace):
     return False
   else:
     s = Substitution(variable, t)
-    # for each substitution in the mgu substitute in the relacement expression
+    # for each substitution in the mgu substitute in the replacement expression
     # by the new substitution
     mgu = [Substitution(e.variable, substitute([s], e.replacement)) for e in mgu]
     pp(trace, "MGU now is: ", ", ".join(map(str, mgu+[s])))

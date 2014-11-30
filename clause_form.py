@@ -116,10 +116,10 @@ def skolemize(statement, to_skolemize={}, quantified_variables=[],
       copy(quantified_variables), used_names) for s in statement.get_children()])
   return statement
 
-# this method removes all ForAll statmenets from a given expression
+# this method removes all ForAll statements from a given expression
 # if it finds and expression that has children it recurses through the children
 # and removes for all from each one and if it finds a for all expression it removes the
-# for all and returns the statment after removing for all from it
+# for all and returns the statement after removing for all from it
 def discard_forall(statement):
   if isinstance(statement, ForAll):
     statement = statement.statement
@@ -145,7 +145,7 @@ def push_or(statement):
   if isinstance(statement, Or):
     children = []
     and_child = None
-    # check to see wether it has an And child and store it separately
+    # check to see whether it has an And child and store it separately
     for child in statement.get_children():
       child = push_or(child)
       if isinstance(child, And) and and_child is None:
@@ -161,7 +161,7 @@ def push_or(statement):
     statement.set_children([push_or(c) for c in statement.get_children()])
   return statement
 
-# This takes a statment of conjunctions and disjunctions and returns an
+# This takes a statement of conjunctions and disjunctions and returns an
 # equivalent statement in cnf form
 def to_cnf(statement):
   vertical_merge(statement)
