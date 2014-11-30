@@ -229,7 +229,8 @@ def clause_form_standardize_apart(clause_form):
 # if the trace is the trace is set to true inner steps are printed
 def get_clause_form(statement, trace=False):
   print(statement)
-  pp(trace, "\nremove equivalences")
+  print()
+  pp(trace, "remove equivalences")
   statement = remove_equivalences(statement)
   pp(trace, statement)
   pp(trace, "\nremove implications")
@@ -239,12 +240,12 @@ def get_clause_form(statement, trace=False):
   statement = statement.push_negation()
   pp(trace, statement)
   pp(trace, '\nStandardize Apart')
-  statement = standardize_apart(statement)
+  statement = standardize_apart(statement, {}, [])
   pp(trace, statement)
-  pp(trace, '\nSkolemize')
-  statement = skolemize(statement)
+  pp(trace, '\nSkolemize and Remove There Exists quantifiers')
+  statement = skolemize(statement, {}, [])
   pp(trace, statement)
-  pp(trace, '\nRemoving For All quatifiers')
+  pp(trace, '\nRemoving For All quantifiers')
   statement = discard_forall(statement)
   pp(trace, statement)
   pp(trace, '\nTo CNF')
@@ -274,11 +275,23 @@ if __name__ == "__main__":
         )
       )
     )
-  get_clause_form(expression, True)
+  # expression with trace set
+  print("Test case 1:")
+  get_clause_form(expression, trace=True)
+  print()
 
-  p1 = Predicate('P', Variable('x'), negated = True)
-  p2 = Predicate('Q', Variable('x'))
-  p3 = ForAll('x', Implication(p2, p1))
-  p4 = Predicate('P', Variable('x'))
-  expression = ThereExists('x', And(children=[p4, p3]))
-  get_clause_form(expression)
+  expression = \
+    ThereExists('x',
+      And(
+        Predicate('P', Variable('x')),
+        ForAll('x',
+          Implication(
+            Predicate('Q', Variable('x')),
+            Predicate('P', Variable('x'), negated = True)
+          )
+        )
+      )
+    )
+  # expression with trace unset
+  print("Test case 2:")
+  get_clause_form(expression, trace=True)
