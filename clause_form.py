@@ -1,27 +1,46 @@
 from fol import *
 
 def remove_equivalences(statement):
+# this condition checks if the statement is either predicate or funciton
+# then it cant have an inner equivalence so no need to check inside it
   if isinstance(statement, Nested):
     pass
   elif isinstance(statement, Equivalence):
+# this condition checks if the statement is an equivalence. It removes it and
+# puts it into the implication form. Then removes equivalences from the new implicatoin
+# form
     statement = remove_equivalences(statement.get_implications())
   elif isinstance(statement, Quantifier):
+# this condition checks if the statement is a Quantifier. It then removes the equivalences
+# from inner statement
     statement.statement = remove_equivalences(statement.statement)
   elif hasattr(statement, "get_children"):
+# this condition checks if the statement is And/Or/Implication. It removes the equivalence from
+# its children
     statement.set_children([remove_equivalences(s) for s in statement.get_children()])
   return statement
 
 def remove_implications(statement):
+# this condition checks if the statement is either predicate or funciton
+# then it cant have an inner implication so no need to check inside it
   if isinstance(statement, Nested):
     pass
   elif isinstance(statement, Implication):
+# this condition checks if the statement is an implication. If so it returns the 
+# or form of this implication after removing the implications from it
     statement = remove_implications(statement.get_or())
   elif isinstance(statement, Quantifier):
+# this condition checks if the statement is a quantifier. If so it removes the implication
+# that are inside its statement
     statement.statement = remove_implications(statement.statement)
   elif hasattr(statement, "get_children"):
+# this condition checks if the statement is an And/Or. If so it removes the implications
+# from its children
     statement.set_children([remove_implications(c) for c in statement.get_children()])
   return statement
 
+# this method is used to generate a new variable given all used names
+# in a certain expression (k - z)
 def get_new_variable(used_names):
   for i in range(1, 5):
     for char in range(ord("z"), ord("k"), -1):
@@ -29,6 +48,8 @@ def get_new_variable(used_names):
       if char not in used_names:
         return char
 
+# this method is used to generate a new constant given all used names
+# in a certain expression (a - k)
 def get_new_constant(used_names):
   for i in range(1, 5):
     for char in range(ord("a"), ord("k")):
@@ -82,6 +103,10 @@ def skolemize(statement, to_skolemize={}, quantified_variables=[], used_names=No
     statement.set_children([skolemize(s, to_skolemize, quantified_variables, used_names) for s in statement.get_children()])
   return statement
 
+# this method removes all ForAll statmenets from a given expression
+# if it finds and expression that has children it recurses through the children
+# and removes for all from each one and if it finds a for all expression it removes the
+# for all and returns the statment after removing for all from it
 def discard_forall(statement):
   if isinstance(statement, ForAll):
     statement = statement.statement
@@ -122,6 +147,9 @@ def to_cnf(statement):
   vertical_merge(statement)
   return statement
 
+#  this method is used to convert a given expression that is already
+# in conjunctive normal form to a clause form where each or expression is converted
+# into a set and the and is a list that contains all those lists
 def to_clause_form(statement):
   clause_form = []
   for d in statement.get_children():
@@ -131,12 +159,17 @@ def to_clause_form(statement):
       clause_form.append(set(d.get_children()))
   return clause_form
 
+# this method is used to print the clause form expression
 def stringify_clause_form(clause_form):
   s = "{\n {"
   s +="},\n {".join([", ".join([s for s in map(str, x)]) for x in clause_form])
   s += "}\n}"
   return s
 
+# this method is used to rename variables in a clause form expression
+# given a source name and changes it into the destination name
+# it goes through the children in the expression and changes each variables with
+# the src_name to the destination_name
 def change_clause_form_variable(clause, src_name, destination_name):
   if hasattr(clause, "__iter__"):
     clause = [change_clause_form_variable(c, src_name, destination_name)
@@ -149,6 +182,10 @@ def change_clause_form_variable(clause, src_name, destination_name):
       clause.name = destination_name
   return clause
 
+# this method is used to standardize apart a clause form expression it goes through
+# each inner expression inside the clause_form and checks all previous names from
+# previous expressions stored inside used names and each common variables is changed
+# using the previous method
 def clause_form_standardize_apart(clause_form):
   standardized_clause_form = []
   used_names = set()
@@ -163,6 +200,9 @@ def clause_form_standardize_apart(clause_form):
     standardized_clause_form.append(clause)
   return standardized_clause_form
 
+# this method is responsible for organizing the call of the functions
+# that are required to change the input expression into clause form
+# if the trace is the trace is set to true inner steps are printed
 def get_clause_form(statement, trace=False):
   print(statement)
   pp(trace, "\nremove equivalences")

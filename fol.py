@@ -1,5 +1,7 @@
 import pdb
 from copy import deepcopy, copy
+# This file contains the classes used in our code.
+# if a class can have inner expressions then these expressions are called its children
 
 # Unicode code points for pretty printing of mathematical symbols
 FORALL = chr(8704)
