@@ -80,7 +80,7 @@ if __name__ == "__main__":
   print()
 
   e1 = Function("f", Variable("x"), Function("g", Variable("x")), Variable("x"))
-  e2 = Function("f", Function("g", Variable("u")), Function("g", Function("g", Function("z"))), Variable("z"))
+  e2 = Function("f", Function("g", Variable("u")), Function("g", Function("g", Variable("z"))), Variable("z"))
   print("Expression 1: ", e1)
   print("Expression 2: ", e2)
   mgu = unify(e1, e2)
