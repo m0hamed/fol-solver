@@ -138,22 +138,31 @@ def vertical_merge(statement):
         new_children.append(deepcopy(child))
     statement.set_children(new_children)
 
+# when an Or connector is found which has an And child distributivity is used
+# to change it into a conjunction of disjunctions
 def push_or(statement):
+  # if statement is an Or connective
   if isinstance(statement, Or):
     children = []
     and_child = None
+    # check to see wether it has an And child and store it separately
     for child in statement.get_children():
       child = push_or(child)
       if isinstance(child, And) and and_child is None:
         and_child = child
       else:
         children.append(child)
+    # if And is found
     if and_child is not None:
+      # convert into conjunction of disjunctions
       statement = And(children=[Or(children=[c]+children) for c in and_child.get_children()])
+  # recurse into children
   if hasattr(statement, "get_children"):
     statement.set_children([push_or(c) for c in statement.get_children()])
   return statement
 
+# This takes a statment of conjunctions and disjunctions and returns an
+# equivalent statement in cnf form
 def to_cnf(statement):
   vertical_merge(statement)
   statement = push_or(statement)
@@ -175,6 +184,8 @@ def to_clause_form(statement):
 # this method is used to print the clause form expression
 def stringify_clause_form(clause_form):
   s = "{\n {"
+  # print braces across clauses, comma separated predicates in a clause
+  # and print each clause in a separate line
   s +="},\n {".join([", ".join([s for s in map(str, x)]) for x in clause_form])
   s += "}\n}"
   return s
