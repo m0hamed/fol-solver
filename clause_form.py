@@ -127,6 +127,8 @@ def discard_forall(statement):
     statement.set_children([discard_forall(s) for s in statement.get_children()])
   return statement
 
+# whenever there is a connective nested within another connective of the same kind
+# then this method merges them together.
 def vertical_merge(statement):
   if isinstance(statement, Connective):
     new_children = []
@@ -294,4 +296,4 @@ if __name__ == "__main__":
     )
   # expression with trace unset
   print("Test case 2:")
-  get_clause_form(expression, trace=True)
+  get_clause_form(expression)

@@ -75,6 +75,10 @@ class Predicate(Nested):
     else:
       return super().__str__()
 
+  def push_negation(self):
+    # you cannot push negation any deeper
+    return self
+
 # parent class for connectives such as And, Or
 class Connective():
   def negate(self):
@@ -86,6 +90,7 @@ class Connective():
   def set_children(self, children):
     self.children = children
 
+  # pushes negation recursively into children
   def push_negation(self):
     temp = self
     if self.negated:
@@ -102,6 +107,7 @@ class And(Connective):
       self.children = children
     self.negated = negated
 
+  # change a conjunction into a disjunction
   def flip(self):
     for x in self.children:
       x.negate()
@@ -123,6 +129,7 @@ class Or(Connective):
       self.children = children
     self.negated = negated
 
+  # change a disjunction into a conjunction
   def flip(self):
     for x in self.children:
       x.negate()
@@ -136,12 +143,16 @@ class Or(Connective):
     return s
 
 # implication
-class Implication(Connective):
+class Implication():
   def __init__(self, anticedent, consequent, negated = False):
     self.anticedent = anticedent
     self.consequent = consequent
     self.negated = negated
 
+  def negate(self):
+    self.negated = not self.negated
+
+  # convert implication into or form
   def get_or(self):
     self.anticedent.negate()
     return Or(self.anticedent, self.consequent, negated=self.negated)
@@ -158,17 +169,17 @@ class Implication(Connective):
   def set_children(self, children):
     self.anticedent, self.consequent = children
 
-  def flip(self):
-    temp = deepcopy(self.consequent)
-    temp.negate()
-    return And(deepcopy(self.anticedent),temp)
-
-class Equivalence(Connective):
+# equivalence
+class Equivalence():
   def __init__(self, statement1, statement2, negated = False):
     self.statement1 = statement1
     self.statement2 = statement2
     self.negated = negated
 
+  def negate(self):
+    self.negated = not self.negated
+
+  # convert equivalence into implications
   def get_implications(self):
     return And(Implication(deepcopy(self.statement1), deepcopy(self.statement2)),
       Implication(deepcopy(self.statement2), deepcopy(self.statement1)), negated=self.negated)
@@ -185,10 +196,7 @@ class Equivalence(Connective):
       s = NOT + s
     return s
 
-  def flip(self):
-    return Or(Implication(deepcopy(self.statement1), deepcopy(self.statement2), negated=True),
-            Implication(deepcopy(self.statement2), deepcopy(self.statement1), negated=True))
-
+# parent clas for quantifiers
 class Quantifier():
   def negate(self):
     self.negated = not self.negated
@@ -206,6 +214,7 @@ class Quantifier():
     temp.statement = temp.statement.push_negation()
     return temp
 
+# for all quantifier
 class ForAll(Quantifier):
   def __init__(self, variable_name, statement, negated = False):
     self.variable_name = variable_name
@@ -223,6 +232,7 @@ class ForAll(Quantifier):
       s = NOT + s
     return s
 
+# there exists quantifier
 class ThereExists(Quantifier):
   def __init__(self, variable_name, statement, negated = False):
     self.variable_name = variable_name
@@ -240,6 +250,7 @@ class ThereExists(Quantifier):
       s = NOT + s
     return s
 
+# pretty print function only prints if trace is set
 def pp(trace, *args):
   if trace:
     print(*args)
