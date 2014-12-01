@@ -28,9 +28,6 @@ class Nested():
   def set_children(self,children):
     self.children = children
 
-  def push_negation(self):
-    return self
-
   def negate(self):
     self.negated = not self.negated
 
